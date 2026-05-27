@@ -45,7 +45,9 @@ describe('source handler', () => {
     assert.equal(typeof body.tag, 'string');
     assert.equal(typeof body.repoUrl, 'string');
     assert.equal(typeof body.license, 'string');
-    const cache = (response.headers as Record<string, string>)['Cache-Control'];
+    const headers = response.headers as Record<string, string>;
+    const cache = headers['Cache-Control'];
+    assert.ok(cache, 'Cache-Control header must be present');
     assert.match(cache, /max-age=60/);
   });
 });
