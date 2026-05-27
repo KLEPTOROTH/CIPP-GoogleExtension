@@ -29,6 +29,22 @@ Minimal engineering norms for CIPP-GoogleExtension. The CTO plan (see
 - Tests live next to the code they cover. Public-facing behavior gets a
   test before it ships.
 
+## Secrets reference
+
+Agents working on this project read secrets from Paperclip company
+secrets, injected into the runtime environment by the harness.
+
+- `GITHUB_TOKEN_CIPP_GOOGLE_EXTENSION` — GitHub PAT scoped to the
+  `KLEPTOROTH/CIPP-GoogleExtension` repository. Use it for `git push`,
+  `gh` CLI commands, and any GitHub REST/GraphQL API calls. Configure
+  git with `git remote set-url origin
+  https://x-access-token:${GITHUB_TOKEN_CIPP_GOOGLE_EXTENSION}@github.com/KLEPTOROTH/CIPP-GoogleExtension.git`
+  or pass it via `GH_TOKEN` for the `gh` CLI.
+
+If a secret you need is missing or doesn't have the right scope, do
+not try to work around it — flag a blocker on the relevant issue and
+let the human account owner re-scope or re-issue.
+
 ## Licensing
 
 - This project is AGPL-3.0 (see `LICENSE`). Any contribution is offered
