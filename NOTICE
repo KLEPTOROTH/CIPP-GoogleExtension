@@ -1,0 +1,17 @@
+CIPP-GoogleExtension
+====================
+
+This project is licensed under the GNU Affero General Public License v3.0
+(see the LICENSE file).
+
+Portions of the design, architecture, and feature surface are derived from
+or inspired by the upstream CIPP project:
+
+    CIPP — CyberDrain Improved Partner Portal
+    Copyright (c) Kelvin Tegelaar and contributors
+    https://github.com/KelvinTegelaar/CIPP
+    Licensed under AGPL-3.0
+
+CIPP-GoogleExtension extends the CIPP model to cover Google Workspace
+alongside Microsoft 365, providing MSPs with a unified pane of glass.
+All upstream copyrights are retained by their respective holders.
