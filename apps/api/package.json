@@ -1,0 +1,27 @@
+{
+  "name": "@cipp-google/api",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "description": "CIPP-GoogleExtension API (Azure Functions v4, Node 20).",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "func start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test test/health.test.ts"
+  },
+  "dependencies": {
+    "@azure/functions": "4.5.1",
+    "@cipp-google/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@cipp-google/eslint-config": "workspace:*",
+    "@types/node": "20.16.5",
+    "eslint": "8.57.1",
+    "eslint-config-prettier": "9.1.0",
+    "eslint-plugin-import": "2.30.0",
+    "typescript": "5.5.4"
+  }
+}

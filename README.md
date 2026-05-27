@@ -16,9 +16,46 @@ assignment, offboarding, reporting) do not require switching tools.
 
 ## Status
 
-Bootstrap. Founding execution plan and architecture are tracked in
-Paperclip (see issue `GST-4`). Code begins landing once the plan is
-ratified.
+Phase 0 scaffolding. Founding execution plan and architecture are
+tracked in Paperclip (see issue `GST-4`). The monorepo, base CI, and
+hello-world skeletons for `apps/web`, `apps/api`, and `packages/core`
+are in. Real feature work begins in Phase 1.
+
+## Bootstrap
+
+Prereqs:
+
+- Node 20 (pinned via `.nvmrc`).
+- pnpm 9 (`corepack enable && corepack prepare pnpm@9.12.3 --activate`).
+
+Install and verify the full pipeline:
+
+```bash
+pnpm install
+pnpm turbo run build lint typecheck test
+```
+
+Useful scoped commands:
+
+- `pnpm --filter @cipp-google/web dev` — Next.js dev server.
+- `pnpm --filter @cipp-google/api start` — Azure Functions local host
+  (`func start` from the Azure Functions Core Tools).
+- `pnpm format` / `pnpm format:check` — Prettier across the workspace.
+
+## Repo layout
+
+```
+apps/
+  api/    Azure Functions v4 (Node 20, TS) — currently a single
+          HTTP-triggered /health function.
+  web/    Next.js 14 (Pages Router, MUI v5, TS) — minimal landing page
+          consuming @cipp-google/core.
+packages/
+  core/                       Shared TS package, the seam other code
+                              extends.
+  eslint-config-cipp-google/  Shared ESLint config (base / next / node
+                              presets).
+```
 
 ## Upstream attribution
 

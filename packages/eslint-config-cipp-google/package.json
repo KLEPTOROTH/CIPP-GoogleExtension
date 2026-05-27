@@ -1,0 +1,32 @@
+{
+  "name": "@cipp-google/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "main": "index.cjs",
+  "exports": {
+    ".": "./index.cjs",
+    "./next": "./next.cjs",
+    "./node": "./node.cjs"
+  },
+  "files": [
+    "index.cjs",
+    "next.cjs",
+    "node.cjs"
+  ],
+  "scripts": {
+    "lint": "echo 'no-op'",
+    "typecheck": "echo 'no-op'",
+    "test": "echo 'no-op'",
+    "build": "echo 'no-op'"
+  },
+  "peerDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0",
+    "eslint-config-prettier": "9.1.0",
+    "eslint-plugin-import": "2.30.0"
+  }
+}
