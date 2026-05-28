@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/smoke.test.ts"
+    "test": "vitest run --config ../../vitest.config.ts",
+    "test:e2e": "playwright test --config playwright.config.ts"
   },
   "dependencies": {
     "@cipp-google/core": "workspace:*",

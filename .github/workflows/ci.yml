@@ -48,3 +48,8 @@ jobs:
 
       - name: Test
         run: pnpm turbo run test
+
+      - name: Verify fixture replay parity
+        run: |
+          pnpm exec tsx tools/test/fixtures/microsoft-graph/record-users-list.fixture.ts
+          pnpm exec tsx tools/test/fixtures/google-admin/record-users-list.fixture.ts

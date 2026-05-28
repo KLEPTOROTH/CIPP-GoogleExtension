@@ -8,15 +8,19 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "func start",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/health.test.ts"
+    "test": "vitest run --config ../../vitest.config.ts"
   },
   "dependencies": {
+    "@azure/data-tables": "13.3.2",
     "@azure/functions": "4.5.1",
+    "@cipp-google/adapter-cipp": "workspace:*",
+    "@cipp-google/audit": "workspace:*",
     "@cipp-google/core": "workspace:*"
   },
   "devDependencies": {
+    "@cipp-google/adapter-mock": "workspace:*",
     "@cipp-google/eslint-config": "workspace:*",
     "@types/node": "20.16.5",
     "eslint": "8.57.1",

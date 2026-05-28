@@ -30,4 +30,8 @@ Release Engineer keeps `SOURCE_COMMIT_SHA` and `SOURCE_TAG` accurate. The deploy
 
 ## Where this lives in the monorepo
 
-This function ships in `apps/api/functions/source/`. The surrounding workspace plumbing (`package.json`, `tsconfig.json`, `host.json`) lands with the monorepo scaffolding in [GST-5](/GST/issues/GST-5). Until that lands, this file is the **contract** — when scaffolding lands it picks up this source and the function compiles into the Azure Functions v4 app.
+This function ships in `apps/api/src/functions/`. The surrounding workspace plumbing
+(`package.json`, `tsconfig.json`, `host.json`) lands with the monorepo scaffolding in
+[GST-5](/GST/issues/GST-5). Until that lands, this file is the **contract** — when
+scaffolding lands it picks up this source and the function compiles into the Azure Functions
+v4 app.

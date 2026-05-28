@@ -1,0 +1,129 @@
+name: sandbox-tenant-ci
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_real_tenant:
+        description: "Force real-tenant steps even if this looks like a dry run"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: sandbox-tenant-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sandbox-verify:
+    name: Unit + contract + sandbox E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run full v0.1 test stack
+        run: pnpm turbo run test
+
+      - name: Detect required sandbox settings
+        id: sandbox-env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.run_real_tenant }}" = "true" ]; then
+            echo "run_real_tenant=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ vars.CIPP_SANDBOX_ALLOW_DRYRUN }}" ] && [ "${{ vars.CIPP_SANDBOX_ALLOW_DRYRUN }}" = "true" ]; then
+            echo "run_real_tenant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_real_tenant=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run sandbox tenant E2E
+        if: steps.sandbox-env.outputs.run_real_tenant == 'true'
+        id: sandbox-run
+        env:
+          M365_SANDBOX_TENANT_ID: ${{ vars.CIPP_M365_SANDBOX_TENANT_ID }}
+          M365_SANDBOX_CUSTOMER_ID: ${{ vars.CIPP_M365_SANDBOX_CUSTOMER_ID }}
+          GOOGLE_SANDBOX_DOMAIN: ${{ vars.CIPP_GOOGLE_SANDBOX_DOMAIN }}
+        run: |
+          if [ -z "${M365_SANDBOX_TENANT_ID}" ] || [ -z "${M365_SANDBOX_CUSTOMER_ID}" ] || [ -z "${GOOGLE_SANDBOX_DOMAIN}" ]; then
+            echo "Sandbox E2E is intentionally skipped: required variables are not present in this environment."
+            exit 0
+          fi
+
+          # Flake-recovery: one retry per invocation.
+          attempt=1
+          max_attempts=2
+          while true; do
+            pnpm exec vitest run apps/api/functions/actions/__tests__/suspend.test.ts && break
+            if [ "${attempt}" -ge "${max_attempts}" ]; then
+              echo "::error::sandbox-tenant e2e failed after ${attempt} attempts"
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+            echo "sandbox e2e failed; retrying attempt ${attempt}/${max_attempts}"
+          done
+
+      - name: Alert on persistent sandbox failure
+        if: failure()
+        run: |
+          payload_title="GST-13 sandbox CI failure"
+          payload_body="Persistent sandbox E2E failure on ${GITHUB_REPOSITORY}@${GITHUB_SHA} (${GITHUB_WORKFLOW} #${GITHUB_RUN_NUMBER})."
+
+          if [ -n "${{ secrets.CIPP_SANDBOX_SLACK_WEBHOOK_URL }}" ]; then
+            echo "Paging on-duty via Slack webhook."
+            cat <<EOF > /tmp/sandbox-failure.json
+            {
+              "text": "${payload_title}: ${payload_body} run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            }
+            EOF
+            curl -X POST -H "Content-Type: application/json" -d @/tmp/sandbox-failure.json "${{ secrets.CIPP_SANDBOX_SLACK_WEBHOOK_URL }}"
+          elif [ -n "${{ secrets.CIPP_PAGERDUTY_ROUTING_KEY }}" ]; then
+            echo "Paging on-duty via PagerDuty."
+            event_payload="$(cat <<EOF
+            {
+              "routing_key": "${{ secrets.CIPP_PAGERDUTY_ROUTING_KEY }}",
+              "event_action": "trigger",
+              "payload": {
+                "summary": "${payload_title}",
+                "source": "${GITHUB_REPOSITORY}",
+                "severity": "critical",
+                "component": "sandbox-tenant-ci",
+                "group": "CIPP-GoogleExtension",
+                "class": "Sandbox tenancy regression",
+                "custom_details": {
+                  "runUrl": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
+                  "commit": "${GITHUB_SHA}",
+                  "workflow": "${GITHUB_WORKFLOW}",
+                  "workflowRun": "${GITHUB_RUN_NUMBER}"
+                }
+              }
+            }
+            EOF
+            )"
+            curl -X POST -H "Content-Type: application/json" \
+              -d "$event_payload" \
+              https://events.pagerduty.com/v2/enqueue
+          else
+            echo "::warning::No on-duty paging destination configured. Set CIPP_SANDBOX_SLACK_WEBHOOK_URL or CIPP_PAGERDUTY_ROUTING_KEY secrets."
+          fi
