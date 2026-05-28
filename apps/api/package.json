@@ -10,7 +10,7 @@
     "start": "func start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/health.test.ts"
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@azure/functions": "4.5.1",

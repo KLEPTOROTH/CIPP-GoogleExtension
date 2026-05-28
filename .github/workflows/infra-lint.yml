@@ -1,0 +1,43 @@
+name: infra-lint
+
+on:
+  pull_request:
+    paths:
+      - "infra/bicep/**"
+      - ".github/workflows/infra-lint.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/bicep/**"
+
+concurrency:
+  group: infra-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  bicep-build:
+    name: bicep build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Bicep CLI
+        run: |
+          curl -sLo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+          chmod +x bicep
+          sudo mv bicep /usr/local/bin/bicep
+          bicep --version
+
+      - name: bicep build main.bicep
+        run: bicep build infra/bicep/main.bicep --stdout > /dev/null
+
+      - name: bicep lint
+        run: bicep lint infra/bicep/main.bicep
+
+      - name: validate .bicepparam files
+        run: |
+          bicep build-params infra/bicep/dev.bicepparam --stdout > /dev/null
+          bicep build-params infra/bicep/prod.bicepparam --stdout > /dev/null
