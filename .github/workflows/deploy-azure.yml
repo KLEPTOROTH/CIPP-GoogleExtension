@@ -1,0 +1,163 @@
+name: deploy-azure
+
+# OIDC federated deploy for the CIPP Google Extension backend.
+#
+#   - PRs touching infra/ or apps/api/ run a `dev` what-if (no apply).
+#   - Pushes to main deploy `dev`.
+#   - The `prod` deploy is environment-gated by GitHub (manual approve).
+#
+# No long-lived secrets: the workflow exchanges its OIDC token for a
+# federated credential on a user-assigned managed identity scoped to
+# the Azure resource group. See `infra/bicep/README.md` for the
+# one-time human setup.
+
+on:
+  pull_request:
+    paths:
+      - "infra/**"
+      - "apps/api/**"
+      - ".github/workflows/deploy-azure.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "apps/api/**"
+      - ".github/workflows/deploy-azure.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        type: choice
+        options: [dev, prod]
+        default: dev
+
+concurrency:
+  group: deploy-azure-${{ github.ref }}-${{ inputs.environment || 'auto' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # required for OIDC token exchange
+
+jobs:
+  # --------------------------------------------------------------------
+  # PR what-if — proves Bicep evaluates against real subscription state
+  # but does not mutate anything.
+  # --------------------------------------------------------------------
+  what-if-dev:
+    name: dev what-if (PR)
+    if: github.event_name == 'pull_request' && vars.AZURE_DEPLOY_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: az deployment group what-if (dev)
+        run: |
+          az deployment group what-if \
+            -g ${{ vars.AZURE_DEV_RG }} \
+            -f infra/bicep/main.bicep \
+            -p infra/bicep/dev.bicepparam
+
+  # --------------------------------------------------------------------
+  # dev deploy on push to main.
+  # --------------------------------------------------------------------
+  deploy-dev:
+    name: deploy dev
+    if: (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'dev')) && vars.AZURE_DEPLOY_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    environment: dev
+    outputs:
+      function-app-name: ${{ steps.outputs.outputs.function-app-name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: az deployment group create (dev)
+        id: deploy
+        run: |
+          az deployment group create \
+            -g ${{ vars.AZURE_DEV_RG }} \
+            -f infra/bicep/main.bicep \
+            -p infra/bicep/dev.bicepparam \
+            -n cge-dev-${{ github.run_id }} \
+            -o json > deploy.json
+
+      - name: Read deployment outputs
+        id: outputs
+        run: |
+          name=$(jq -r '.properties.outputs.functionAppName.value' deploy.json)
+          echo "function-app-name=$name" >> "$GITHUB_OUTPUT"
+
+      # AGPL §13: stamp the deployed commit SHA on the Function App so
+      # /source returns the correct value. The deploy identity must have
+      # Website Contributor on the Function App (granted by Bicep).
+      - name: Stamp SOURCE_COMMIT_SHA + SOURCE_TAG
+        run: |
+          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "untagged")
+          az functionapp config appsettings set \
+            -g ${{ vars.AZURE_DEV_RG }} \
+            -n ${{ steps.outputs.outputs.function-app-name }} \
+            --settings \
+              SOURCE_COMMIT_SHA=${{ github.sha }} \
+              SOURCE_TAG="$tag"
+
+      # apps/api/ Functions code deploy — kept minimal. Real packaging
+      # lands with the monorepo CI in GST-5.
+      - name: Deploy Function App code (placeholder until GST-5)
+        if: hashFiles('apps/api/package.json') != ''
+        run: |
+          echo "TODO(GST-5): build apps/api with the monorepo and func azure functionapp publish."
+
+  # --------------------------------------------------------------------
+  # prod deploy — manual approve via GitHub Environments.
+  # --------------------------------------------------------------------
+  deploy-prod:
+    name: deploy prod
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod'
+    runs-on: ubuntu-latest
+    environment: prod # GitHub Environment with required reviewers configured
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: az deployment group create (prod)
+        id: deploy
+        run: |
+          az deployment group create \
+            -g ${{ vars.AZURE_PROD_RG }} \
+            -f infra/bicep/main.bicep \
+            -p infra/bicep/prod.bicepparam \
+            -n cge-prod-${{ github.run_id }} \
+            -o json > deploy.json
+
+      - name: Stamp SOURCE_COMMIT_SHA + SOURCE_TAG
+        run: |
+          name=$(jq -r '.properties.outputs.functionAppName.value' deploy.json)
+          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "untagged")
+          az functionapp config appsettings set \
+            -g ${{ vars.AZURE_PROD_RG }} \
+            -n "$name" \
+            --settings \
+              SOURCE_COMMIT_SHA=${{ github.sha }} \
+              SOURCE_TAG="$tag"
