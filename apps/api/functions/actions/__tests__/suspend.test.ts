@@ -1,5 +1,5 @@
 import type { HttpRequest, InvocationContext } from '@azure/functions';
-import { MockAdapter } from '@cipp-google/adapter-mock';
+import { MockAdapter } from '../../../../../packages/adapter-mock/src';
 import {
   GenericProviderError,
   NetworkTimeoutError,
