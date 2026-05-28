@@ -44,3 +44,9 @@ Proceed only when API route + adapter changes are available in-code; this issue 
 - CEO dependency cleanup confirmed GST-22 is complete.
 - GST-14 now has one first-class blocker: GST-23 (`adapter-cipp` implementation/review).
 - Release path remains unchanged: resume GST-14 release execution immediately after GST-23 lands with a code-bearing branch/PR.
+
+## Liveness repair note (2026-05-28)
+
+- Dependency liveness was explicitly repaired in issue thread governance.
+- Active first-class blocker remains: `GST-23`.
+- Release Engineering re-activates only when GST-23 review/merge clears and a shippable branch/PR is available.
