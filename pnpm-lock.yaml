@@ -44,6 +44,9 @@ importers:
       '@cipp-google/adapter-cipp':
         specifier: workspace:*
         version: link:../../packages/adapter-cipp
+      '@cipp-google/adapter-mock':
+        specifier: workspace:*
+        version: link:../../packages/adapter-mock
       '@cipp-google/audit':
         specifier: workspace:*
         version: link:../../packages/audit
@@ -51,9 +54,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
-      '@cipp-google/adapter-mock':
-        specifier: workspace:*
-        version: link:../../packages/adapter-mock
       '@cipp-google/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config-cipp-google

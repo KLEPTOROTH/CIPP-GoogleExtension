@@ -16,11 +16,11 @@
     "@azure/data-tables": "13.3.2",
     "@azure/functions": "4.5.1",
     "@cipp-google/adapter-cipp": "workspace:*",
+    "@cipp-google/adapter-mock": "workspace:*",
     "@cipp-google/audit": "workspace:*",
     "@cipp-google/core": "workspace:*"
   },
   "devDependencies": {
-    "@cipp-google/adapter-mock": "workspace:*",
     "@cipp-google/eslint-config": "workspace:*",
     "@types/node": "20.16.5",
     "eslint": "8.57.1",
