@@ -31,3 +31,15 @@
 
 ## Handoff
 - After dependency closure and green targeted verification, route CTO + QA review on PR #10.
+
+## Addendum (2026-05-28, follow-up)
+- Fixed by adding:
+  - `packages/core/src/types.ts`
+  - `packages/core/src/identity-provider.ts`
+- Re-ran targeted checks:
+  - `tools/gst96-verify-bounded-scope.sh origin/main` -> PASS
+  - `pnpm --filter @cipp-google/core test -- execute-action.test.ts` -> PASS
+  - `pnpm --filter @cipp-google/core build` -> PASS
+  - `pnpm --filter @cipp-google/web build` -> PASS
+- Updated changed-file count on bounded replacement PR: 20
+- Staff disposition updated: structural blockers closed; route CTO + QA review.
