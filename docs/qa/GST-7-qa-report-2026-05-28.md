@@ -286,3 +286,38 @@
   1. Owner: Staff Engineer.
   2. Action: submit `approve` or `request_changes` in the sign-off block and post the decision in GST-7 thread.
   3. CTO follow-up: if `approve`, close GST-7 as `done` immediately.
+
+## Staff Engineer Continuation Update (2026-05-28T19:04Z)
+
+- Executed structural pre-landing review decision against GST-7 scope and GST-31 closure set.
+- Staff sign-off block is now completed in:
+  - `docs/reviews/gst-7-staff-review-request-2026-05-28.md`
+- Staff decision:
+  - `approve`
+
+### Verification evidence (staff heartbeat)
+
+1. `pnpm exec tsx tools/test/fixtures/microsoft-graph/record-users-list.fixture.ts` -> pass.
+2. `pnpm exec tsx tools/test/fixtures/google-admin/record-users-list.fixture.ts` -> pass.
+3. `pnpm turbo run test --filter=@cipp-google/adapter-cipp --filter=@cipp-google/api --filter=@cipp-google/adapter-google --filter=@cipp-google/adapter-m365 --filter=@cipp-google/adapter-mock` -> pass.
+
+### Disposition and owner/action
+
+- Disposition: `in_review` with explicit close path (no remaining Staff Engineer blocker).
+- Next owner: CTO.
+- Next action: close `GST-7` to `done` per transition rule now that Staff decision is `approve`.
+
+## CTO Continuation Update (2026-05-28T19:06Z)
+
+- Closure gate satisfied:
+  - Staff Engineer sign-off is present in `docs/reviews/gst-7-staff-review-request-2026-05-28.md` with decision `approve`.
+- CTO close action executed:
+  - Updated `docs/reviews/gst-7-cto-review-2026-05-28.md` disposition from `in_review` to `done`.
+- Final issue disposition for GST-7 in this heartbeat:
+  - `done`
+
+## CTO Continuation Update (2026-05-28T19:08Z)
+
+- Liveness-repair comment acknowledged.
+- Status reconciliation: issue remains `done`; no blocker exists and no additional implementation work is required.
+- Purpose of this note: prevent future phantom `blocked` regression for GST-7.

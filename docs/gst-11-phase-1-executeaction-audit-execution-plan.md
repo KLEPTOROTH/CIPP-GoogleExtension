@@ -4,6 +4,12 @@ Scope: executeAction envelope, typed provider result contract, and dual-cloud au
 
 Status assumption for this heartbeat: **no GST-11 branch/commit/PR is present in this checkout**. This document is the locked implementation plan to be used when the owning branch is provided or when implementation starts directly from `main` + GST-11 scope.
 
+## Implementation target (locked 2026-05-28)
+
+- Branch: `origin/gst-11-implementation-base`
+- Base commit: `a60605b0eede545172f0ba17598e0b19928a79af`
+- Intent: this branch is the explicit implementation base for GST-11 follow-on code and review.
+
 ## 1) Locked decisions
 
 1. Every mutation must go through `executeAction`.

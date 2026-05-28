@@ -36,5 +36,6 @@
 
 ## Disposition
 
-- CTO disposition for GST-7: `in_review`
-- Close condition: Staff Engineer approval recorded; then move GST-7 to `done`.
+- CTO disposition for GST-7: `done`
+- Close condition satisfied:
+  - Staff Engineer approval is recorded in `docs/reviews/gst-7-staff-review-request-2026-05-28.md` with decision `approve` at `2026-05-28T19:04:01Z`.

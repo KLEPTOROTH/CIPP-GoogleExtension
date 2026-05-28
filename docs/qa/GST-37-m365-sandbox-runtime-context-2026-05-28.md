@@ -48,6 +48,29 @@ Before running `docs/gst-9-m365-smoke-runbook.md`, QA must have:
 - Confirmation that `gdap/{customerId}/tenant-id` exists and maps to the intended M365 sandbox tenant
 - Confirmation that Graph app secrets (`gdap/graph/*`) are present and unexpired
 
+## Runtime Binding Resolution (Release)
+
+For GST-34 execution, split inputs into:
+
+- Fixed credential path (code-defined):
+  - `gdap/graph/client-id`
+  - `gdap/graph/client-secret`
+  - `gdap/graph/tenant-id`
+  - `gdap/{customerId}/tenant-id`
+- Live run identifiers (environment-defined):
+  - `customerId` = sandbox customer record id used by API/runtime
+  - `userKey` = one known non-production user key in that customer tenant
+
+`customerId` and `userKey` are not hard-coded in repo by design and must come from the sandbox runtime/customer seed used for the live smoke.
+
+## Current Harness Preflight (2026-05-28 UTC)
+
+- `KEY_VAULT_URI`: missing in this local harness run
+- `AZURE_CLIENT_ID`: missing in this local harness run
+- Azure CLI auth/session: unavailable in this local harness run
+
+Result: this workspace can publish the required binding contract, but cannot directly enumerate or verify live tenant/customer/user values without the target sandbox runtime context.
+
 ## Preflight Verification Commands (No Secret Output)
 
 These checks validate presence only.
@@ -69,3 +92,5 @@ If any secret lookup fails, GST-34 remains blocked until Release Engineer refres
 ## Disposition
 
 GST-37 deliverable is complete once this context is loaded into the QA runtime and QA reruns GST-34 live smoke with evidence.
+
+Follow-on publication artifact for live binding values is tracked in `docs/qa/GST-39-live-sandbox-bindings-2026-05-28.md`.

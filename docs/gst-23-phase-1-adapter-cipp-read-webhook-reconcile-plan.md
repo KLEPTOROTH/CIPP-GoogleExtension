@@ -3,6 +3,12 @@
 Status: Blocked until branch/worktree is switched to GST-23 implementation base.
 Source: Parent plan `GST-4`
 
+## Implementation target (locked 2026-05-28)
+
+- Branch: `origin/gst-23-implementation-target`
+- Target commit: `00f493ead66496e85e48ae553ae3243cf3fe07f6`
+- Intent: this branch/commit is the canonical GST-23 implementation and review target.
+
 ## 1) Objective and guardrail
 
 Build customer-mirror ingestion from CIPP with two independent data paths:
@@ -18,8 +24,8 @@ Primary compatibility rule:
 ## 2) Hard blocker (unblock required before code changes)
 
 - Current checkout is on `chore/gst-18-branch-protection` (checked from `.git/HEAD`).
-- Phase-1 `packages/adapter-cipp`, webhook handlers, and scheduled reconcile surfaces are absent on this branch.
-- Unblock action: maintainer must switch this worktree to the GST-23 patch base before implementation can be landed.
+- GST-23 work must be executed against `origin/gst-23-implementation-target` at `00f493ead66496e85e48ae553ae3243cf3fe07f6`, not on GST-18 branch-protection scope.
+- Unblock action: maintainer must switch this worktree to the GST-23 target branch/commit before implementation updates are landed.
 
 ## 3) Architecture and component boundaries
 
