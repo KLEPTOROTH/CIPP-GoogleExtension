@@ -14,9 +14,9 @@ export async function reconcileCustomers(_timer: Timer, context: InvocationConte
     return;
   }
 
-  const { CippAdapter } = await import('@cipp-google/adapter-cipp');
-  const adapter = new CippAdapter({ baseUrl, apiToken: token });
   try {
+    const { CippAdapter } = await import('@cipp-google/adapter-cipp');
+    const adapter = new CippAdapter({ baseUrl, apiToken: token });
     const reconciled = await runReconcile(
       {
         async listCustomerMirrorSnapshot(): Promise<readonly CustomerMirrorRecord[]> {
@@ -40,7 +40,7 @@ export async function reconcileCustomers(_timer: Timer, context: InvocationConte
 
     context.log(`reconcile finished: repaired=${reconciled.repaired}`);
   } catch (error) {
-    context.error('reconcile aborted: upstream snapshot fetch failed', error);
+    context.error('reconcile aborted: upstream snapshot fetch failed or adapter init failed', error);
   }
 }
 

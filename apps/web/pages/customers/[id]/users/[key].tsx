@@ -18,6 +18,7 @@ import TypedErrorBanner from '@/components/TypedErrorBanner';
 
 export default function CustomerUserPage() {
   const router = useRouter();
+  const isReady = router.isReady;
   const customerId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
   const userKey = Array.isArray(router.query.key) ? router.query.key[0] : router.query.key;
 
@@ -36,8 +37,11 @@ export default function CustomerUserPage() {
 
   const user = cachedUser;
 
-  if (!user) {
+  if (!isReady) {
     return <Typography>Loading user...</Typography>;
+  }
+  if (!user) {
+    return <Typography>User not found.</Typography>;
   }
 
   const overall = getOverallStatus(user);

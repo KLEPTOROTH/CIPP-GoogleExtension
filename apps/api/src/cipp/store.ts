@@ -719,23 +719,22 @@ export class DurableCippSyncStore implements CippSyncStore {
       try {
         await tableService.createTable(this.mirrorTableName);
       } catch (error) {
-        if (!isConflictError(error)) {
-          if (!isNotFoundError(error)) {
-            void error;
-          }
+        if (!isConflictError(error) && !isNotFoundError(error)) {
+          throw error;
         }
       }
 
       try {
         await tableService.createTable(this.eventTableName);
       } catch (error) {
-        if (!isConflictError(error)) {
-          if (!isNotFoundError(error)) {
-            void error;
-          }
+        if (!isConflictError(error) && !isNotFoundError(error)) {
+          throw error;
         }
       }
-    })();
+    })().catch((error) => {
+      this.tableCreation = undefined;
+      throw error;
+    });
 
     return this.tableCreation;
   }

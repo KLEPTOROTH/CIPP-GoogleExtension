@@ -49,6 +49,7 @@ export interface ExecuteActionAudit {
   startedAt: string;
   finishedAt: string;
   status: ExecuteActionStatus;
+  error?: string;
   m365: ExecuteActionChannelResult;
   google: ExecuteActionChannelResult;
 }
@@ -212,28 +213,8 @@ export async function executeAction(input: ExecuteActionInput): Promise<ExecuteA
       result.audit.status = 502;
     }
 
-    if (!result.m365.mutation.ok && !result.google.mutation.ok) {
-      return result;
-    }
-
     const message = error instanceof Error ? error.message : 'audit write failed';
-    const auditWriteError: ProviderResult<User> = {
-      ok: false,
-      error: new GenericProviderError(`audit_write_failed:${message}`),
-    };
-
-    if (result.m365.mutation.ok) {
-      result.m365.mutation = auditWriteError;
-      result.audit.m365.mutation = auditWriteError;
-    }
-    if (result.google.mutation.ok) {
-      result.google.mutation = auditWriteError;
-      result.audit.google.mutation = auditWriteError;
-    }
-
-    result.audit.m365Applied = result.m365.mutation.ok;
-    result.audit.googleApplied = result.google.mutation.ok;
-    result.audit.applied = result.audit.m365Applied || result.audit.googleApplied;
+    result.audit.error = `audit_write_failed:${message}`;
   }
 
   return result;
