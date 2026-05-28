@@ -11,14 +11,19 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./test-conformance": {
+      "types": "./dist/test-conformance/index.d.ts",
+      "import": "./dist/test-conformance/index.js",
+      "default": "./dist/test-conformance/index.js"
     }
   },
   "files": ["dist"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/smoke.test.ts"
+    "test": "vitest run --config ../../vitest.config.ts"
   },
   "devDependencies": {
     "@cipp-google/eslint-config": "workspace:*",
@@ -28,6 +33,7 @@
     "eslint-config-prettier": "9.1.0",
     "eslint-import-resolver-typescript": "3.6.3",
     "eslint-plugin-import": "2.30.0",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "vitest": "2.1.4"
   }
 }
