@@ -37,6 +37,7 @@ Mode: Diff-aware + targeted smoke
 2. Execute runbook sequence in `docs/gst-9-m365-smoke-runbook.md`:
    - `listUsers` -> `suspendUser` -> `readUserSnapshot` -> `resumeUser` -> final `getUser`
 3. Capture UTC timestamp, sanitized customer/user identifiers, and operation results in issue evidence.
+4. Use the runtime-context checklist in `docs/qa/GST-37-m365-sandbox-runtime-context-2026-05-28.md` to verify required env/Key Vault bindings before rerunning live smoke.
 
 ## QA disposition
 - Status recommendation: **BLOCKED** (manual-live validation cannot be completed in current harness).
