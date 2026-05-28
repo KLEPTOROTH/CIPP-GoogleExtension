@@ -10,4 +10,12 @@ module.exports = {
       node: true,
     },
   },
+  rules: {
+    'import/no-unresolved': [
+      'error',
+      {
+        ignore: ['^@cipp-google/audit$', '^@cipp-google/adapter-mock$'],
+      },
+    ],
+  },
 };
