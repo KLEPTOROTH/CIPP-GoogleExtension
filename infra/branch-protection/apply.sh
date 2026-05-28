@@ -41,16 +41,6 @@ for bin in curl jq; do
   fi
 done
 
-api() {
-  local method="$1" path="$2"
-  shift 2
-  curl -sS -X "$method" \
-    -H "Authorization: token $TOKEN" \
-    -H "Accept: application/vnd.github+json" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
-    "https://api.github.com${path}" "$@"
-}
-
 # --- Required CI status checks --------------------------------------------
 #
 # Names match the `name:` field on each job in .github/workflows/*.yml.
@@ -100,32 +90,37 @@ if [[ "${DRY_RUN:-0}" == "1" ]]; then
 fi
 
 # --- Pre-flight: confirm API access ---------------------------------------
-preflight_status=$(curl -sS -o /tmp/bp_preflight.json -w "%{http_code}" \
+preflight_resp=$(curl -sS -w "\n%{http_code}" \
   -H "Authorization: token $TOKEN" \
   -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
   "https://api.github.com/repos/${REPO}/branches/${BRANCH}/protection")
+preflight_status=$(printf '%s' "$preflight_resp" | tail -n 1)
+preflight_body=$(printf '%s' "$preflight_resp" | sed '$d')
 
 if [[ "$preflight_status" == "403" ]]; then
   echo "error: GitHub returned 403 on branch protection." >&2
   echo "       This usually means the repo is private on a free plan." >&2
   echo "       Fix: flip the repo public OR upgrade to GitHub Pro." >&2
   echo "       See docs/branch-protection.md." >&2
-  cat /tmp/bp_preflight.json >&2 || true
+  echo "$preflight_body" >&2
   exit 1
 fi
 
 # --- Apply branch protection ----------------------------------------------
 echo "Applying branch protection to ${REPO}:${BRANCH}..."
-http_status=$(curl -sS -o /tmp/bp_apply.json -w "%{http_code}" -X PUT \
+apply_resp=$(curl -sS -w "\n%{http_code}" -X PUT \
   -H "Authorization: token $TOKEN" \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
   "https://api.github.com/repos/${REPO}/branches/${BRANCH}/protection" \
   -d "$payload")
+http_status=$(printf '%s' "$apply_resp" | tail -n 1)
+apply_body=$(printf '%s' "$apply_resp" | sed '$d')
 
 if [[ "$http_status" != "200" ]]; then
   echo "error: PUT branch protection returned $http_status" >&2
-  cat /tmp/bp_apply.json >&2 || true
+  echo "$apply_body" >&2
   exit 1
 fi
 echo "  branch protection applied (HTTP $http_status)"
@@ -133,16 +128,18 @@ echo "  branch protection applied (HTTP $http_status)"
 # --- Enable auto-merge at the repo level ----------------------------------
 echo "Enabling repo-level auto-merge..."
 repo_payload='{"allow_auto_merge": true, "delete_branch_on_merge": true}'
-http_status=$(curl -sS -o /tmp/bp_repo.json -w "%{http_code}" -X PATCH \
+repo_resp=$(curl -sS -w "\n%{http_code}" -X PATCH \
   -H "Authorization: token $TOKEN" \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
   "https://api.github.com/repos/${REPO}" \
   -d "$repo_payload")
+http_status=$(printf '%s' "$repo_resp" | tail -n 1)
+repo_body=$(printf '%s' "$repo_resp" | sed '$d')
 
 if [[ "$http_status" != "200" ]]; then
   echo "error: PATCH repo settings returned $http_status" >&2
-  cat /tmp/bp_repo.json >&2 || true
+  echo "$repo_body" >&2
   exit 1
 fi
 echo "  auto-merge enabled (HTTP $http_status)"

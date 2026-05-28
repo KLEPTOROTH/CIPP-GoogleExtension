@@ -19,9 +19,10 @@ fi
 resp=$(curl -sS -w "\n%{http_code}" \
   -H "Authorization: token $TOKEN" \
   -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
   "https://api.github.com/repos/${REPO}/branches/${BRANCH}/protection")
 
-body=$(printf '%s' "$resp" | head -n -1)
+body=$(printf '%s' "$resp" | sed '$d')
 status=$(printf '%s' "$resp" | tail -n 1)
 
 if [[ "$status" != "200" ]]; then
@@ -44,22 +45,22 @@ echo "$body" | jq '{
 ok=1
 fail() { echo "  FAIL: $*" >&2; ok=0; }
 
-reviews=$(echo "$body" | jq '.required_pull_request_reviews.required_approving_review_count // 0')
+reviews=$(echo "$body" | jq '.required_pull_request_reviews?.required_approving_review_count // 0')
 [[ "$reviews" -ge 2 ]] || fail "required_approving_review_count=$reviews (want >= 2)"
 
-co=$(echo "$body" | jq -r '.required_pull_request_reviews.require_code_owner_reviews // false')
+co=$(echo "$body" | jq -r '.required_pull_request_reviews?.require_code_owner_reviews // false')
 [[ "$co" == "true" ]] || fail "require_code_owner_reviews=$co (want true)"
 
-fp=$(echo "$body" | jq -r '.allow_force_pushes.enabled // false')
+fp=$(echo "$body" | jq -r '.allow_force_pushes?.enabled // false')
 [[ "$fp" == "false" ]] || fail "allow_force_pushes=$fp (want false)"
 
-del=$(echo "$body" | jq -r '.allow_deletions.enabled // false')
+del=$(echo "$body" | jq -r '.allow_deletions?.enabled // false')
 [[ "$del" == "false" ]] || fail "allow_deletions=$del (want false)"
 
-ea=$(echo "$body" | jq -r '.enforce_admins.enabled // false')
+ea=$(echo "$body" | jq -r '.enforce_admins?.enabled // false')
 [[ "$ea" == "true" ]] || fail "enforce_admins=$ea (want true)"
 
-checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | length')
+checks=$(echo "$body" | jq -r '.required_status_checks?.contexts // [] | length')
 [[ "$checks" -ge 1 ]] || fail "required_status_checks has $checks contexts (want >= 1)"
 
 if [[ "$ok" -eq 1 ]]; then
