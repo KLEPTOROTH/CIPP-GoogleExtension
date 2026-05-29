@@ -9,6 +9,34 @@ test('home page links to phase-1 routes', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'CIPP-GoogleExtension' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Customers' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Audit' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'CIPP integration' })).toBeVisible();
+  const sourceLink = page.getByRole('link', { name: 'Source code' });
+  await expect(sourceLink).toBeVisible();
+  await expect(sourceLink).toHaveAttribute('href', '/source');
+
+  const licenseLink = page.getByRole('link', { name: 'License' });
+  await expect(licenseLink).toBeVisible();
+  await expect(licenseLink).toHaveAttribute('href', '/license');
+});
+
+test('source and license pages are directly reachable', async ({ page }) => {
+  await page.goto('/source');
+  await expect(page.getByRole('heading', { name: 'Source code' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open repository' })).toHaveAttribute(
+    'href',
+    'https://github.com/KLEPTOROTH/CIPP-GoogleExtension',
+  );
+  await expect(page.getByRole('link', { name: 'View license' })).toHaveAttribute(
+    'href',
+    '/license',
+  );
+
+  await page.goto('/license');
+  await expect(page.getByRole('heading', { name: 'License' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Read AGPL-3.0' })).toHaveAttribute(
+    'href',
+    'https://github.com/KLEPTOROTH/CIPP-GoogleExtension/blob/main/LICENSE',
+  );
 });
 
 test('golden path: suspend then resume from user detail', async ({ page }) => {
