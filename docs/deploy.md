@@ -1,5 +1,72 @@
 # Deploy
 
+How CIPP Google Extension reaches hosted environments.
+
+## Cloudflare Pages demo
+
+The public demo at `https://cipp-google-extension-demo.pages.dev` is a
+Cloudflare Pages direct-upload project. It is not git-connected, so the
+deploy workflow uploads `apps/web/out` explicitly.
+
+Production for this project is the existing Pages branch `gst-68-demo`.
+Deploying to `main` creates only a preview and does not update the apex
+domain.
+
+### GitHub Actions path
+
+`.github/workflows/deploy-cloudflare-pages.yml` deploys the demo on pushes to
+`main` that touch the web app, shared core package, or the deploy workflow. It
+can also be started manually with `workflow_dispatch` from `main`.
+
+Required repository secrets:
+
+- `CLOUDFLARE_API_TOKEN` — scoped token with Cloudflare Pages deploy access for
+  `cipp-google-extension-demo`.
+- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare account that owns the Pages project.
+
+The workflow stamps `SOURCE_COMMIT_SHA` and `SOURCE_TAG` during the static
+build, verifies the expected exported routes exist, then runs:
+
+```sh
+wrangler pages deploy apps/web/out \
+  --project-name=cipp-google-extension-demo \
+  --branch=gst-68-demo
+```
+
+### Manual fallback
+
+Use this only when the GitHub Actions path is unavailable. Run it from a clean
+checkout of the commit intended for release:
+
+```sh
+pnpm install --frozen-lockfile
+
+export SOURCE_COMMIT_SHA="$(git rev-parse HEAD)"
+export SOURCE_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo untagged)"
+export SOURCE_REPO_URL="https://github.com/KLEPTOROTH/CIPP-GoogleExtension"
+export SOURCE_LICENSE="AGPL-3.0"
+
+pnpm --filter @cipp-google/core build
+pnpm --filter @cipp-google/web build
+
+pnpm dlx wrangler@3 pages deploy apps/web/out \
+  --project-name=cipp-google-extension-demo \
+  --branch=gst-68-demo
+```
+
+After deploy, verify:
+
+```sh
+curl -fsS https://cipp-google-extension-demo.pages.dev/source
+curl -fsS https://cipp-google-extension-demo.pages.dev/customers/acme/users
+curl -fsS https://cipp-google-extension-demo.pages.dev/customers/acme/users/user-001
+```
+
+The Release Engineer owns this loop. Drift between the deployed page and the
+source stamp is an incident.
+
+## Azure
+
 How CIPP Google Extension reaches Azure.
 
 ## TL;DR
@@ -47,11 +114,11 @@ Until step 5 lands, every deploy-azure.yml job is skipped (green) via the `vars.
 
 ## What the workflow does on each event
 
-| Event | Jobs | Effect |
-|---|---|---|
-| PR touching `infra/**` or `apps/api/**` | `what-if-dev` | Runs `az deployment group what-if` against dev. No apply. |
-| Push to `main` touching `infra/**` or `apps/api/**` | `deploy-dev` | Applies Bicep to dev. Stamps `SOURCE_COMMIT_SHA` + `SOURCE_TAG` on the Function App. |
-| `workflow_dispatch` with `environment=prod` | `deploy-prod` (after manual approve) | Applies Bicep to prod. Same SHA/tag stamping. |
+| Event                                               | Jobs                                 | Effect                                                                               |
+| --------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
+| PR touching `infra/**` or `apps/api/**`             | `what-if-dev`                        | Runs `az deployment group what-if` against dev. No apply.                            |
+| Push to `main` touching `infra/**` or `apps/api/**` | `deploy-dev`                         | Applies Bicep to dev. Stamps `SOURCE_COMMIT_SHA` + `SOURCE_TAG` on the Function App. |
+| `workflow_dispatch` with `environment=prod`         | `deploy-prod` (after manual approve) | Applies Bicep to prod. Same SHA/tag stamping.                                        |
 
 ## AGPL §13 — keeping `/source` honest
 

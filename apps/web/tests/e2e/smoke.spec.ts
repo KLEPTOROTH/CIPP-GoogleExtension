@@ -19,54 +19,18 @@ test('home page links to phase-1 routes', async ({ page }) => {
   await expect(licenseLink).toHaveAttribute('href', '/license');
 });
 
-test('same-origin source manifest endpoint feeds the source page', async ({ page, request }) => {
-  const response = await request.get('/api/source');
-  expect(response.ok()).toBe(true);
-  expect(response.headers()['cache-control']).toBe('public, max-age=60');
-  expect(response.headers()['content-type']).toContain('application/json');
-
-  const manifest = (await response.json()) as {
-    commitSha: string;
-    tag: string;
-    repoUrl: string;
-    license: string;
-  };
-  expect(manifest.repoUrl).toBe('https://github.com/KLEPTOROTH/CIPP-GoogleExtension');
-  expect(manifest.license).toBe('AGPL-3.0');
-  const expectedSourceUrl =
-    manifest.tag !== 'unknown' && manifest.tag !== 'untagged'
-      ? `${manifest.repoUrl}/tree/${manifest.tag}`
-      : manifest.commitSha !== 'unknown'
-        ? `${manifest.repoUrl}/commit/${manifest.commitSha}`
-        : manifest.repoUrl;
-
+test('source page renders the build-time source manifest', async ({ page }) => {
   await page.goto('/source');
-  await expect(page.getByText(`Source: GitHub @ ${manifest.tag}`)).toBeVisible();
+  await expect(page.getByText(/Source: GitHub @/)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open repository' })).toHaveAttribute(
     'href',
-    expectedSourceUrl,
+    /^https:\/\/github\.com\/KLEPTOROTH\/CIPP-GoogleExtension/,
   );
 });
 
 test('source and license pages are directly reachable', async ({ page }) => {
-  await page.route('**/api/source', async (route) => {
-    await route.fulfill({
-      json: {
-        commitSha: '0123456789abcdef0123456789abcdef01234567',
-        tag: 'v0.1.0',
-        repoUrl: 'https://github.com/KLEPTOROTH/CIPP-GoogleExtension',
-        license: 'AGPL-3.0',
-      },
-    });
-  });
-
   await page.goto('/source');
   await expect(page.getByRole('heading', { name: 'Source code' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open repository' })).toHaveAttribute(
-    'href',
-    'https://github.com/KLEPTOROTH/CIPP-GoogleExtension/tree/v0.1.0',
-  );
-  await expect(page.getByText('Source: GitHub @ v0.1.0 (commit 01234567)')).toBeVisible();
   await expect(page.getByRole('link', { name: 'View license' })).toHaveAttribute(
     'href',
     '/license',
@@ -77,25 +41,6 @@ test('source and license pages are directly reachable', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Read AGPL-3.0' })).toHaveAttribute(
     'href',
     'https://github.com/KLEPTOROTH/CIPP-GoogleExtension/blob/main/LICENSE',
-  );
-});
-
-test('source page falls back to commit URL for untagged builds', async ({ page }) => {
-  await page.route('**/api/source', async (route) => {
-    await route.fulfill({
-      json: {
-        commitSha: 'abcdef0123456789abcdef0123456789abcdef01',
-        tag: 'untagged',
-        repoUrl: 'https://github.com/KLEPTOROTH/CIPP-GoogleExtension',
-        license: 'AGPL-3.0',
-      },
-    });
-  });
-
-  await page.goto('/source');
-  await expect(page.getByRole('link', { name: 'Open repository' })).toHaveAttribute(
-    'href',
-    'https://github.com/KLEPTOROTH/CIPP-GoogleExtension/commit/abcdef0123456789abcdef0123456789abcdef01',
   );
 });
 

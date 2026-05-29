@@ -14,7 +14,7 @@
         "host.json",
         "local.settings.json.example"
       ],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**"]
     },
     "lint": {
       "dependsOn": ["^build"],

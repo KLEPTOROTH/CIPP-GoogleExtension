@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CORE_PACKAGE_NAME } from '@cipp-google/core';
-import { buildSourceManifest } from '../pages/api/source';
-import { buildSourceUrl } from '../pages/source';
+import { buildSourceManifest, buildSourceUrl } from '../src/sourceManifest';
 
 describe('web smoke', () => {
   it('links @cipp-google/core', () => {
