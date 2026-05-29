@@ -1,0 +1,46 @@
+{
+  "tenantId": "tenant-gst9",
+  "token": "fixture-token-1",
+  "listUsers": {
+    "value": [
+      {
+        "id": "m365-user-1",
+        "displayName": "Alice One",
+        "userPrincipalName": "alice@example.com",
+        "accountEnabled": true,
+        "createdDateTime": "2026-01-01T00:00:00.000Z",
+        "lastModifiedDateTime": "2026-01-01T00:00:00.000Z"
+      }
+    ]
+  },
+  "getUser": {
+    "value": {
+      "id": "m365-user-1",
+      "displayName": "Alice One",
+      "userPrincipalName": "alice@example.com",
+      "accountEnabled": true,
+      "createdDateTime": "2026-01-01T00:00:00.000Z",
+      "lastModifiedDateTime": "2026-01-01T00:00:00.000Z"
+    }
+  },
+  "getUserSuspended": {
+    "value": {
+      "id": "m365-user-1",
+      "displayName": "Alice One",
+      "userPrincipalName": "alice@example.com",
+      "accountEnabled": false,
+      "createdDateTime": "2026-01-01T00:00:00.000Z",
+      "lastModifiedDateTime": "2026-01-02T00:00:00.000Z"
+    }
+  },
+  "getUserResumed": {
+    "value": {
+      "id": "m365-user-1",
+      "displayName": "Alice One",
+      "userPrincipalName": "alice@example.com",
+      "accountEnabled": true,
+      "createdDateTime": "2026-01-01T00:00:00.000Z",
+      "lastModifiedDateTime": "2026-01-03T00:00:00.000Z"
+    }
+  }
+}

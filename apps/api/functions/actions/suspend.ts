@@ -4,21 +4,17 @@ import {
   type HttpResponseInit,
   type InvocationContext,
 } from '@azure/functions';
+import { createAuditStoreFromEnv, type AuditStore } from '@cipp-google/audit';
 import {
   type Customer,
   type IdentityProvider,
   executeAction,
   type ExecuteActionName,
-  type ExecuteActionAudit,
 } from '@cipp-google/core';
 
 type AdapterPair = { m365: IdentityProvider; google: IdentityProvider };
 
 type AdapterFactory = () => Promise<AdapterPair>;
-
-interface AuditStore {
-  writeAuditRecord(audit: ExecuteActionAudit): Promise<void>;
-}
 
 interface SuspendRequestBody {
   actorId?: string;
@@ -61,9 +57,14 @@ interface SuspendRouteResult {
 }
 
 let auditStore: AuditStore | undefined;
-let auditStoreInitializationError: Error | undefined = new Error(
-  'Durable audit store is not wired in the bounded demo route. Inject an AuditStore before enabling writes.',
-);
+let auditStoreInitializationError: Error | undefined;
+
+try {
+  auditStore = createAuditStoreFromEnv({ requireDurable: true });
+} catch (error) {
+  auditStoreInitializationError =
+    error instanceof Error ? error : new Error('Durable audit store initialization failed.');
+}
 
 const MAX_ACTOR_ID_CHARS = 128;
 const ACTOR_ID_SAFE_PATTERN = /^[\w.-@+:/]{1,128}$/;
@@ -224,7 +225,17 @@ export async function createSuspendActionHandler(
 
   let body: SuspendRequestBody;
   try {
-    body = parseBody(await req.json());
+    // Parse transport body first so empty payloads are treated as {} while malformed JSON still fails.
+    if (typeof req.text === 'function') {
+      const rawBody = await req.text();
+      if (!rawBody.trim()) {
+        body = parseBody({});
+      } else {
+        body = parseBody(JSON.parse(rawBody));
+      }
+    } else {
+      body = parseBody(await req.json());
+    }
   } catch (error) {
     const normalized = isNormalizedApiError(error)
       ? error

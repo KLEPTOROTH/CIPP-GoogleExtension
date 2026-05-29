@@ -1,0 +1,22 @@
+[
+  {
+    "scope": "https://graph.microsoft.com:443",
+    "method": "GET",
+    "path": "/v1.0/users?$select=id,displayName,userPrincipalName&$top=10",
+    "status": 200,
+    "response": {
+      "value": [
+        {
+          "id": "user-1",
+          "displayName": "Alice Mock",
+          "userPrincipalName": "alice@example.invalid"
+        }
+      ]
+    },
+    "responseIsBinary": false,
+    "rawHeaders": ["Content-Type", "application/json"],
+    "reqheaders": {
+      "content-type": "application/json"
+    }
+  }
+]

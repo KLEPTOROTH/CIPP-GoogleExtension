@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, expect, it } from 'vitest';
 
 import { runReconcile } from '../src/cipp/reconcile.js';
 import { DurableCippSyncStore, InMemoryCippSyncStore } from '../src/cipp/store.js';
@@ -33,20 +32,20 @@ describe('cipp webhook idempotency + reconcile healing', () => {
       config: { secret, replayWindowSeconds: 300 },
     });
 
-    assert.equal(firstParsed.accepted, true);
-    assert.ok(firstParsed.event);
-    assert.equal(secondParsed.accepted, true);
+    expect(firstParsed.accepted).toBe(true);
+    expect(firstParsed.event).toBeDefined();
+    expect(secondParsed.accepted).toBe(true);
 
     const firstQueue = await store.enqueueWebhookEvent(firstParsed.event!);
     const secondQueue = await store.enqueueWebhookEvent(secondParsed.event!);
 
     const drained = await store.drainWebhookEvents();
 
-    assert.deepEqual(firstQueue, { accepted: true });
-    assert.deepEqual(secondQueue, { accepted: false, reason: 'duplicate' });
-    assert.equal(drained.applied, 1);
-    assert.equal(drained.skipped, 0);
-    assert.equal((await store.snapshot()).length, 1);
+    expect(firstQueue).toEqual({ accepted: true });
+    expect(secondQueue).toEqual({ accepted: false, reason: 'duplicate' });
+    expect(drained.applied).toBe(1);
+    expect(drained.skipped).toBe(0);
+    expect(await store.snapshot()).toHaveLength(1);
   });
 
   it('rejects webhook payloads with invalid event types', async () => {
@@ -68,7 +67,7 @@ describe('cipp webhook idempotency + reconcile healing', () => {
       config: { secret, replayWindowSeconds: 300 },
     });
 
-    assert.deepEqual(parsed, { accepted: false, reason: 'invalid_payload' });
+    expect(parsed).toEqual({ accepted: false, reason: 'invalid_payload' });
   });
 
   it('rejects webhook payloads with non-string identifier fields', async () => {
@@ -90,7 +89,7 @@ describe('cipp webhook idempotency + reconcile healing', () => {
       config: { secret, replayWindowSeconds: 300 },
     });
 
-    assert.deepEqual(parsed, { accepted: false, reason: 'invalid_payload' });
+    expect(parsed).toEqual({ accepted: false, reason: 'invalid_payload' });
   });
 
   it('rejects webhook payloads with non-string eventTime', async () => {
@@ -112,7 +111,7 @@ describe('cipp webhook idempotency + reconcile healing', () => {
       config: { secret, replayWindowSeconds: 300 },
     });
 
-    assert.deepEqual(parsed, { accepted: false, reason: 'invalid_payload' });
+    expect(parsed).toEqual({ accepted: false, reason: 'invalid_payload' });
   });
 
   it('heals missed webhook by reconciliation snapshot', async () => {
@@ -136,8 +135,8 @@ describe('cipp webhook idempotency + reconcile healing', () => {
       store,
     );
 
-    assert.equal(result.repaired, 1);
-    assert.equal((await store.getCustomer('cust-heal'))?.displayName, 'Recovered Customer');
+    expect(result.repaired).toBe(1);
+    expect((await store.getCustomer('cust-heal'))?.displayName).toBe('Recovered Customer');
   });
 
   it('marks local-only mirror rows as unbound during reconcile delete drift healing', async () => {
@@ -161,8 +160,8 @@ describe('cipp webhook idempotency + reconcile healing', () => {
       store,
     );
 
-    assert.equal(result.repaired, 1);
-    assert.equal((await store.getCustomer('cust-local'))?.bindingState, 'unbound');
+    expect(result.repaired).toBe(1);
+    expect((await store.getCustomer('cust-local'))?.bindingState).toBe('unbound');
   });
 
   it('does not mutate mirror when reconcile snapshot fetch fails', async () => {
@@ -177,20 +176,18 @@ describe('cipp webhook idempotency + reconcile healing', () => {
       eventTime: new Date().toISOString(),
     });
 
-    await assert.rejects(
-      () =>
-        runReconcile(
-          {
-            async listCustomerMirrorSnapshot() {
-              throw new Error('upstream unavailable');
-            },
+    await expect(
+      runReconcile(
+        {
+          async listCustomerMirrorSnapshot() {
+            throw new Error('upstream unavailable');
           },
-          store,
-        ),
-      /upstream unavailable/,
-    );
+        },
+        store,
+      ),
+    ).rejects.toThrow('upstream unavailable');
 
-    assert.equal((await store.getCustomer('cust-fail-closed'))?.bindingState, 'bound');
+    expect((await store.getCustomer('cust-fail-closed'))?.bindingState).toBe('bound');
   });
 
   it('claims each received webhook once under concurrent drain attempts', async () => {
@@ -221,8 +218,59 @@ describe('cipp webhook idempotency + reconcile healing', () => {
     const totalApplied = first.applied + second.applied;
     const snapshot = await store.snapshot();
 
-    assert.equal(totalApplied, 2);
-    assert.equal(snapshot.length, 2);
+    expect(totalApplied).toBe(2);
+    expect(snapshot).toHaveLength(2);
+  });
+
+  it('does not process events already marked processing by another drain owner', async () => {
+    const store = new InMemoryCippSyncStore();
+    const now = new Date().toISOString();
+
+    await store.enqueueWebhookEvent({
+      eventId: 'evt-received',
+      eventType: 'customer.updated',
+      customerId: 'cust-received',
+      displayName: 'Received',
+      cippTenantId: 'tenant-owned',
+      sourceVersion: 1,
+      eventTime: now,
+    });
+
+    (store as unknown as {
+      webhookEvents: Map<
+        string,
+        {
+          customerId: string;
+          eventType: 'customer.updated' | 'customer.deleted';
+          eventId: string;
+          payloadHash: string;
+          sourceVersion: number;
+          displayName: string;
+          cippTenantId: string;
+          eventTime: string;
+          firstSeenAt: string;
+          status: 'received' | 'processing' | 'applied' | 'duplicate' | 'stale' | 'replay_conflict';
+        }
+      >;
+    }).webhookEvents.set('evt-foreign-processing', {
+      customerId: 'cust-foreign',
+      eventType: 'customer.updated',
+      eventId: 'evt-foreign-processing',
+      payloadHash: 'foreign-hash',
+      sourceVersion: 1,
+      displayName: 'Foreign',
+      cippTenantId: 'tenant-owned',
+      eventTime: now,
+      firstSeenAt: now,
+      status: 'processing',
+    });
+
+    const drained = await store.drainWebhookEvents(10);
+    const snapshot = await store.snapshot();
+
+    expect(drained.applied).toBe(1);
+    expect(snapshot).toHaveLength(1);
+    expect(snapshot[0]?.customerId).toBe('cust-received');
   });
 
   it('builds durable event entities with Azure Tables SDK lowercase keys', () => {
@@ -258,19 +306,16 @@ describe('cipp webhook idempotency + reconcile healing', () => {
       status: 'received',
     });
 
-    assert.deepEqual(
-      {
-        PartitionKey: entity.PartitionKey,
-        RowKey: entity.RowKey,
-        partitionKey: entity.partitionKey,
-        rowKey: entity.rowKey,
-      },
-      {
-        PartitionKey: 'events',
-        RowKey: 'evt-lowercase-keys',
-        partitionKey: 'events',
-        rowKey: 'evt-lowercase-keys',
-      },
-    );
+    expect({
+      PartitionKey: entity.PartitionKey,
+      RowKey: entity.RowKey,
+      partitionKey: entity.partitionKey,
+      rowKey: entity.rowKey,
+    }).toEqual({
+      PartitionKey: 'events',
+      RowKey: 'evt-lowercase-keys',
+      partitionKey: 'events',
+      rowKey: 'evt-lowercase-keys',
+    });
   });
 });

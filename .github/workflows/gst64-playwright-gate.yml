@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'apps/web/**'
+      - 'packages/core/**'
+      - 'tools/test/**'
       - '.github/workflows/gst64-playwright-gate.yml'
       - 'package.json'
       - 'pnpm-lock.yaml'
@@ -17,6 +19,9 @@ jobs:
     name: GST-64 Chromium smoke gate
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+      PLAYWRIGHT_INSTALL_WITH_DEPS: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,18 +41,82 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Playwright Chromium
+      - name: Restore Playwright browser cache
         uses: actions/cache@v4
         with:
           path: .cache/ms-playwright
-          key: gst64-playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-chromium-${{ runner.os }}-
 
       - name: Run GST-64 smoke gate
         env:
-          PLAYWRIGHT_INSTALL_WITH_DEPS: '1'
           PLAYWRIGHT_NO_WEBSERVER: '1'
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3100
         run: bash tools/test/run-gst64-playwright-gate.sh
+
+      - name: Prepare Playwright evidence bundle
+        if: always()
+        run: |
+          set -euo pipefail
+
+          evidence_root=/tmp/gst64-playwright-evidence
+          bundle=/tmp/gst64-playwright-evidence.tar.gz
+          manifest=/tmp/gst64-playwright-evidence-manifest.txt
+          checksum=/tmp/gst64-playwright-evidence.sha256
+
+          rm -rf "$evidence_root"
+          mkdir -p "$evidence_root"
+
+          if [ -d apps/web/playwright-report ]; then
+            mkdir -p "$evidence_root/apps/web"
+            cp -a apps/web/playwright-report "$evidence_root/apps/web/playwright-report"
+          fi
+
+          if [ -d apps/web/test-results ]; then
+            mkdir -p "$evidence_root/apps/web"
+            cp -a apps/web/test-results "$evidence_root/apps/web/test-results"
+          fi
+
+          if [ -f /tmp/gst64-web.log ]; then
+            cp /tmp/gst64-web.log "$evidence_root/gst64-web.log"
+          fi
+
+          find "$evidence_root" -type f | sort > "$manifest"
+          tar -czf "$bundle" -C /tmp "$(basename "$evidence_root")"
+          sha256sum "$bundle" > "$checksum"
+
+          {
+            echo "## GST-64 Playwright Evidence"
+            echo
+            echo "- Bundle: \`$bundle\`"
+            echo "- SHA256: \`$(cut -d' ' -f1 "$checksum")\`"
+            echo "- Size: \`$(wc -c < "$bundle") bytes\`"
+            echo
+            echo "### Evidence Files"
+            echo '```text'
+            sed "s#^$evidence_root/#/#" "$manifest"
+            echo '```'
+            echo
+            echo "### Web Log Tail"
+            echo '```text'
+            if [ -f /tmp/gst64-web.log ]; then
+              tail -n 120 /tmp/gst64-web.log
+            else
+              echo "No /tmp/gst64-web.log file was produced."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$(wc -c < "$bundle")" -le 900000 ]; then
+            echo "GST64_EVIDENCE_BUNDLE_BASE64_BEGIN"
+            base64 "$bundle"
+            echo "GST64_EVIDENCE_BUNDLE_BASE64_END"
+          else
+            echo "GST-64 evidence bundle is larger than the inline log fallback limit."
+            echo "Bundle path: $bundle"
+            cat "$checksum"
+          fi
 
       - name: Upload Playwright artifacts
         if: always()
@@ -56,6 +125,9 @@ jobs:
         with:
           name: gst64-playwright-artifacts
           path: |
+            /tmp/gst64-playwright-evidence.tar.gz
+            /tmp/gst64-playwright-evidence.sha256
+            /tmp/gst64-playwright-evidence-manifest.txt
             apps/web/playwright-report
             apps/web/test-results
             /tmp/gst64-web.log

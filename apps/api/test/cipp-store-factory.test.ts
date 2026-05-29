@@ -1,31 +1,35 @@
 import assert from 'node:assert/strict';
-import { afterEach, describe, it, mock } from 'node:test';
+import { afterEach, describe, it } from 'node:test';
 
 import { TableClient } from '@azure/data-tables';
 
 import { createCippSyncStore, InMemoryCippSyncStore } from '../src/cipp/store.js';
 
 describe('createCippSyncStore durable fallback policy', () => {
+  const originalFromConnectionString = TableClient.fromConnectionString;
+
   afterEach(() => {
-    mock.restoreAll();
+    TableClient.fromConnectionString = originalFromConnectionString;
   });
 
   it('throws when durable store initialization fails and fallback is not explicitly enabled', () => {
-    mock.method(TableClient, 'fromConnectionString', () => {
+    TableClient.fromConnectionString = (() => {
       throw new Error('durable init failed');
-    });
+    }) as typeof TableClient.fromConnectionString;
 
-    assert.throws(() =>
+    assert.throws(
+      () =>
       createCippSyncStore({
         CIPP_WEBHOOK_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
       } as NodeJS.ProcessEnv),
-    /durable init failed/);
+      /durable init failed/,
+    );
   });
 
   it('falls back to in-memory only when explicit fallback flag is true', () => {
-    mock.method(TableClient, 'fromConnectionString', () => {
+    TableClient.fromConnectionString = (() => {
       throw new Error('durable init failed');
-    });
+    }) as typeof TableClient.fromConnectionString;
 
     const store = createCippSyncStore({
       CIPP_WEBHOOK_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',

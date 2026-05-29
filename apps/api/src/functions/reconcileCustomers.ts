@@ -1,6 +1,8 @@
 import { app, type InvocationContext, type Timer } from '@azure/functions';
 
+import { runReconcile } from '../cipp/reconcile.js';
 import { createCippSyncStore } from '../cipp/store.js';
+import type { CustomerMirrorRecord } from '../cipp/types.js';
 
 const syncStore = createCippSyncStore();
 
@@ -12,8 +14,34 @@ export async function reconcileCustomers(_timer: Timer, context: InvocationConte
     return;
   }
 
-  await syncStore.drainWebhookEvents();
-  context.log('reconcile skipped: CIPP snapshot adapter is not included in the bounded demo PR');
+  try {
+    const { CippAdapter } = await import('@cipp-google/adapter-cipp');
+    const adapter = new CippAdapter({ baseUrl, apiToken: token });
+    const reconciled = await runReconcile(
+      {
+        async listCustomerMirrorSnapshot(): Promise<readonly CustomerMirrorRecord[]> {
+          const customers = await adapter.listCustomers();
+          if (!customers.ok) {
+            throw new Error(`adapter.listCustomers failed: ${customers.error.code}`);
+          }
+
+          return customers.value.map((customer) => ({
+            customerId: customer.id,
+            displayName: customer.name,
+            cippTenantId: customer.id,
+            sourceVersion: 0,
+            lastObservedAt: new Date().toISOString(),
+            bindingState: 'bound',
+          }));
+        },
+      },
+      syncStore,
+    );
+
+    context.log(`reconcile finished: repaired=${reconciled.repaired}`);
+  } catch (error) {
+    context.error('reconcile aborted: upstream snapshot fetch failed or adapter init failed', error);
+  }
 }
 
 app.timer('reconcileCustomers', {

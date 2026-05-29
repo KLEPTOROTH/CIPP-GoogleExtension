@@ -16,7 +16,6 @@ pnpm turbo run build --filter=@cipp-google/web
 echo "Starting web app on ${PLAYWRIGHT_BASE_URL}..."
 PORT=3100 pnpm --filter @cipp-google/web start >/tmp/gst64-web.log 2>&1 &
 web_pid=$!
-echo "${web_pid}" >/tmp/gst64-web.pid
 cleanup() {
   kill "${web_pid}" >/dev/null 2>&1 || true
 }
@@ -36,4 +35,4 @@ if ! curl -fsS "${PLAYWRIGHT_BASE_URL}" >/dev/null; then
 fi
 
 echo "Running GST-64 Playwright smoke gate..."
-pnpm exec playwright test --config apps/web/playwright.config.ts
+pnpm --filter @cipp-google/web exec playwright test --config playwright.config.ts -- tests/e2e/smoke.spec.ts

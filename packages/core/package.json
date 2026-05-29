@@ -23,7 +23,7 @@
     "build": "tsc -p tsconfig.json",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "vitest run --config ../../vitest.config.ts"
   },
   "devDependencies": {
     "@cipp-google/eslint-config": "workspace:*",
@@ -33,7 +33,7 @@
     "eslint-config-prettier": "9.1.0",
     "eslint-import-resolver-typescript": "3.6.3",
     "eslint-plugin-import": "2.30.0",
-    "tsx": "4.19.1",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "vitest": "2.1.4"
   }
 }

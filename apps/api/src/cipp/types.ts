@@ -20,11 +20,5 @@ export interface CustomerMirrorRecord {
 
 export interface ProcessResult {
   accepted: boolean;
-  reason?:
-    | 'duplicate'
-    | 'stale'
-    | 'conflict_exhausted'
-    | 'replay_conflict'
-    | 'invalid_signature'
-    | 'invalid_payload';
+  reason?: 'duplicate' | 'stale' | 'replay_conflict' | 'invalid_signature' | 'invalid_payload';
 }

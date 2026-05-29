@@ -10,11 +10,15 @@
     "start": "func start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "pnpm run test:node && pnpm run test:vitest",
+    "test:node": "tsx --test test/cipp-store-factory.test.ts test/source.test.ts",
+    "test:vitest": "vitest run --config ../../vitest.config.ts test/cipp-sync.test.ts test/health.test.ts test/issue-liveness-policy.test.ts test/issue-lifecycle-mutation.test.ts test/issue-lifecycle-durable-cas.test.ts"
   },
   "dependencies": {
     "@azure/data-tables": "13.3.2",
     "@azure/functions": "4.5.1",
+    "@cipp-google/adapter-cipp": "workspace:*",
+    "@cipp-google/audit": "workspace:*",
     "@cipp-google/core": "workspace:*"
   },
   "devDependencies": {
@@ -23,7 +27,6 @@
     "eslint": "8.57.1",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "2.30.0",
-    "tsx": "4.19.1",
     "typescript": "5.5.4"
   }
 }

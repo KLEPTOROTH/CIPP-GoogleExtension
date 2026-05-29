@@ -13,17 +13,17 @@ echo "Installing Chromium browser bundle via Playwright..."
 INSTALL_TIMEOUT_SECONDS="${PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS:-1800}"
 DOWNLOAD_CONNECTION_TIMEOUT_MS="${PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT_MS:-120000}"
 export PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT="${PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT:-${DOWNLOAD_CONNECTION_TIMEOUT_MS}}"
+install_args=(install chromium)
 
-install_args=(install --force chromium)
 if [[ "${PLAYWRIGHT_INSTALL_WITH_DEPS:-0}" == "1" ]]; then
-  install_args=(install --with-deps --force chromium)
+  install_args=(install --with-deps chromium)
 fi
 
 if command -v timeout >/dev/null 2>&1; then
   install_exit=0
   for attempt in 1 2; do
     set +e
-    timeout "${INSTALL_TIMEOUT_SECONDS}" pnpm exec playwright "${install_args[@]}"
+    timeout "${INSTALL_TIMEOUT_SECONDS}" pnpm --filter @cipp-google/web exec playwright "${install_args[@]}"
     install_exit=$?
     set -e
     if [[ "${install_exit}" -eq 0 ]]; then
@@ -37,20 +37,17 @@ if command -v timeout >/dev/null 2>&1; then
 
   if [[ "${install_exit}" -eq 124 ]]; then
     echo "ERROR: Playwright install timed out after ${INSTALL_TIMEOUT_SECONDS}s (download/extract pipeline stalled)." >&2
-    echo "Likely runner-image incompatibility (this host reports unsupported OS fallback in Playwright install logs)." >&2
-    echo "Unblock: provide a Chromium-ready runner image or a supported OS runtime where install completes." >&2
     exit 124
-  fi
-  if [[ "${install_exit}" -ne 0 ]]; then
+  elif [[ "${install_exit}" -ne 0 ]]; then
     echo "ERROR: Playwright install failed with exit code ${install_exit}." >&2
     exit "${install_exit}"
   fi
 else
-  pnpm exec playwright "${install_args[@]}"
+  pnpm --filter @cipp-google/web exec playwright "${install_args[@]}"
 fi
 
 echo "Verifying Chromium executable path..."
-executable_path="$(pnpm exec node -e 'const { chromium } = require("@playwright/test"); process.stdout.write(chromium.executablePath());')"
+executable_path="$(pnpm --filter @cipp-google/web exec node -e 'const { chromium } = require("@playwright/test"); process.stdout.write(chromium.executablePath());')"
 
 if [[ ! -x "${executable_path}" ]]; then
   echo "ERROR: Chromium executable is missing or not executable at ${executable_path}" >&2
