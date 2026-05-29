@@ -5,11 +5,11 @@ import {
   type InvocationContext,
 } from '@azure/functions';
 
-import { CippConnectService, InMemoryCippConnectionStore } from '../cipp/connect.js';
+import { CippConnectService, createCippConnectionStore } from '../cipp/connect.js';
 import type { CippConnectionInput } from '../cipp/connect.js';
 import { createCippSyncStore } from '../cipp/store.js';
 
-const integrationStore = new InMemoryCippConnectionStore();
+const integrationStore = createCippConnectionStore();
 const syncStore = createCippSyncStore();
 const service = new CippConnectService({ integrationStore, syncStore });
 

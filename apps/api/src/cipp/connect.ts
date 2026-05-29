@@ -1,3 +1,4 @@
+import { TableClient, TableServiceClient, type TableEntity } from '@azure/data-tables';
 import type { Customer } from '@cipp-google/core';
 
 import { runReconcile } from './reconcile.js';
@@ -57,13 +58,59 @@ interface CustomerListReader {
 }
 
 const INTEGRATION_ID = 'cipp';
+const CONNECTION_PARTITION_KEY = 'integration';
+const DEFAULT_CONNECTION_TABLE = 'cipp_connection';
 
-export class InMemoryCippConnectionStore implements CippConnectionStore {
-  private state: CippIntegrationState = {
+interface RawConnectionEntity extends TableEntity {
+  PartitionKey: string;
+  RowKey: string;
+  partitionKey: string;
+  rowKey: string;
+  integrationId: string;
+  baseUrl?: string;
+  secretRef?: string;
+  status: CippIntegrationStatus;
+  lastValidatedAt?: string;
+  lastImportedAt?: string;
+  lastDisconnectedAt?: string;
+  lastErrorCode?: CippConnectErrorCode;
+  version: number;
+}
+
+interface ConnectionTableClient {
+  getEntity<T extends object>(partitionKey: string, rowKey: string): Promise<T>;
+  upsertEntity(entity: TableEntity<RawConnectionEntity>, mode: 'Replace'): Promise<unknown>;
+}
+
+interface DurableCippConnectionStoreOptions {
+  storageConnectionString: string;
+  tableName?: string;
+  client?: ConnectionTableClient;
+  ensureTable?: () => Promise<void>;
+}
+
+function disconnectedState(): CippIntegrationState {
+  return {
     integrationId: INTEGRATION_ID,
     status: 'disconnected',
     version: 0,
   };
+}
+
+function isConflictError(error: unknown): boolean {
+  const candidate = error as { code?: string; statusCode?: number; status?: number };
+  const statusCode = candidate?.statusCode ?? candidate?.status;
+  return statusCode === 409 || candidate?.code === 'Conflict' || candidate?.code === 'EntityAlreadyExists';
+}
+
+function isNotFoundError(error: unknown): boolean {
+  const candidate = error as { code?: string; statusCode?: number; status?: number };
+  const statusCode = candidate?.statusCode ?? candidate?.status;
+  return statusCode === 404 || candidate?.code === 'ResourceNotFound';
+}
+
+export class InMemoryCippConnectionStore implements CippConnectionStore {
+  private state: CippIntegrationState = disconnectedState();
 
   get(): Promise<CippIntegrationState> {
     return Promise.resolve({ ...this.state });
@@ -72,6 +119,128 @@ export class InMemoryCippConnectionStore implements CippConnectionStore {
   save(state: CippIntegrationState): Promise<CippIntegrationState> {
     this.state = { ...state };
     return Promise.resolve({ ...this.state });
+  }
+}
+
+export class DurableCippConnectionStore implements CippConnectionStore {
+  private readonly client: ConnectionTableClient;
+  private readonly tableName: string;
+  private tableCreation: Promise<void> | undefined;
+
+  constructor(private readonly options: DurableCippConnectionStoreOptions) {
+    this.tableName = options.tableName ?? DEFAULT_CONNECTION_TABLE;
+    this.client =
+      options.client ??
+      TableClient.fromConnectionString(options.storageConnectionString, this.tableName);
+    void this.ensureTable();
+  }
+
+  async get(): Promise<CippIntegrationState> {
+    await this.ensureTable();
+
+    try {
+      const entity = await this.client.getEntity<RawConnectionEntity>(
+        CONNECTION_PARTITION_KEY,
+        INTEGRATION_ID,
+      );
+      return mapConnectionEntity(entity);
+    } catch (error) {
+      if (isNotFoundError(error)) {
+        return disconnectedState();
+      }
+      throw error;
+    }
+  }
+
+  async save(state: CippIntegrationState): Promise<CippIntegrationState> {
+    await this.ensureTable();
+
+    const entity: TableEntity<RawConnectionEntity> = {
+      PartitionKey: CONNECTION_PARTITION_KEY,
+      RowKey: INTEGRATION_ID,
+      partitionKey: CONNECTION_PARTITION_KEY,
+      rowKey: INTEGRATION_ID,
+      integrationId: INTEGRATION_ID,
+      baseUrl: state.baseUrl,
+      secretRef: state.secretRef,
+      status: state.status,
+      lastValidatedAt: state.lastValidatedAt,
+      lastImportedAt: state.lastImportedAt,
+      lastDisconnectedAt: state.lastDisconnectedAt,
+      lastErrorCode: state.lastErrorCode,
+      version: state.version,
+    };
+
+    await this.client.upsertEntity(entity, 'Replace');
+    return { ...state };
+  }
+
+  private async ensureTable(): Promise<void> {
+    if (this.options.ensureTable) {
+      return this.options.ensureTable();
+    }
+    if (this.tableCreation) {
+      return this.tableCreation;
+    }
+
+    this.tableCreation = (async () => {
+      const tableService = TableServiceClient.fromConnectionString(
+        this.options.storageConnectionString,
+      );
+      try {
+        await tableService.createTable(this.tableName);
+      } catch (error) {
+        if (!isConflictError(error) && !isNotFoundError(error)) {
+          throw error;
+        }
+      }
+    })().catch((error) => {
+      this.tableCreation = undefined;
+      throw error;
+    });
+
+    return this.tableCreation;
+  }
+}
+
+function mapConnectionEntity(entity: RawConnectionEntity): CippIntegrationState {
+  return {
+    integrationId: entity.integrationId,
+    baseUrl: entity.baseUrl,
+    secretRef: entity.secretRef,
+    status: entity.status,
+    lastValidatedAt: entity.lastValidatedAt,
+    lastImportedAt: entity.lastImportedAt,
+    lastDisconnectedAt: entity.lastDisconnectedAt,
+    lastErrorCode: entity.lastErrorCode,
+    version: Number(entity.version),
+  };
+}
+
+export function createCippConnectionStore(
+  env: NodeJS.ProcessEnv = process.env,
+): CippConnectionStore {
+  const allowInMemoryFallback = env.CIPP_ALLOW_INMEMORY_FALLBACK === 'true';
+  const storageConnectionString =
+    env.CIPP_CONNECTION_STORAGE_CONNECTION_STRING ??
+    env.CIPP_STORAGE_CONNECTION_STRING ??
+    env.AZURE_WEBJOBS_STORAGE ??
+    env.AzureWebJobsStorage;
+
+  if (!storageConnectionString) {
+    return new InMemoryCippConnectionStore();
+  }
+
+  try {
+    return new DurableCippConnectionStore({
+      storageConnectionString,
+      tableName: env.CIPP_CONNECTION_TABLE ?? DEFAULT_CONNECTION_TABLE,
+    });
+  } catch (error) {
+    if (!allowInMemoryFallback) {
+      throw error;
+    }
+    return new InMemoryCippConnectionStore();
   }
 }
 
