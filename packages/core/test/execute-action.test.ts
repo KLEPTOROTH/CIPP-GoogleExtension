@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 import { executeAction } from '../src/execute-action.js';
 import type { Customer, IdentityProvider, ProviderResult, User, AuditEntry } from '../src/index.js';
@@ -77,7 +78,7 @@ describe('executeAction invariants', () => {
       writeAudit: async () => undefined,
     });
 
-    expect(result.status).toBe(207);
-    expect(result.chip).toBe('Inconsistent');
+    assert.equal(result.status, 207);
+    assert.equal(result.chip, 'Inconsistent');
   });
 });

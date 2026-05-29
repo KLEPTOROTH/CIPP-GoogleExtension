@@ -1,27 +1,29 @@
+import assert from 'node:assert/strict';
+import { afterEach, describe, it, mock } from 'node:test';
+
 import { TableClient } from '@azure/data-tables';
-import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createCippSyncStore, InMemoryCippSyncStore } from '../src/cipp/store.js';
 
 describe('createCippSyncStore durable fallback policy', () => {
   afterEach(() => {
-    vi.restoreAllMocks();
+    mock.restoreAll();
   });
 
   it('throws when durable store initialization fails and fallback is not explicitly enabled', () => {
-    vi.spyOn(TableClient, 'fromConnectionString').mockImplementation(() => {
+    mock.method(TableClient, 'fromConnectionString', () => {
       throw new Error('durable init failed');
     });
 
-    expect(() =>
+    assert.throws(() =>
       createCippSyncStore({
         CIPP_WEBHOOK_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
       } as NodeJS.ProcessEnv),
-    ).toThrow('durable init failed');
+    /durable init failed/);
   });
 
   it('falls back to in-memory only when explicit fallback flag is true', () => {
-    vi.spyOn(TableClient, 'fromConnectionString').mockImplementation(() => {
+    mock.method(TableClient, 'fromConnectionString', () => {
       throw new Error('durable init failed');
     });
 
@@ -30,6 +32,6 @@ describe('createCippSyncStore durable fallback policy', () => {
       CIPP_ALLOW_INMEMORY_FALLBACK: 'true',
     } as NodeJS.ProcessEnv);
 
-    expect(store).toBeInstanceOf(InMemoryCippSyncStore);
+    assert.ok(store instanceof InMemoryCippSyncStore);
   });
 });

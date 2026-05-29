@@ -4,17 +4,21 @@ import {
   type HttpResponseInit,
   type InvocationContext,
 } from '@azure/functions';
-import { createAuditStoreFromEnv, type AuditStore } from '@cipp-google/audit';
 import {
   type Customer,
   type IdentityProvider,
   executeAction,
   type ExecuteActionName,
+  type ExecuteActionAudit,
 } from '@cipp-google/core';
 
 type AdapterPair = { m365: IdentityProvider; google: IdentityProvider };
 
 type AdapterFactory = () => Promise<AdapterPair>;
+
+interface AuditStore {
+  writeAuditRecord(audit: ExecuteActionAudit): Promise<void>;
+}
 
 interface SuspendRequestBody {
   actorId?: string;
@@ -57,14 +61,9 @@ interface SuspendRouteResult {
 }
 
 let auditStore: AuditStore | undefined;
-let auditStoreInitializationError: Error | undefined;
-
-try {
-  auditStore = createAuditStoreFromEnv({ requireDurable: true });
-} catch (error) {
-  auditStoreInitializationError =
-    error instanceof Error ? error : new Error('Durable audit store initialization failed.');
-}
+let auditStoreInitializationError: Error | undefined = new Error(
+  'Durable audit store is not wired in the bounded demo route. Inject an AuditStore before enabling writes.',
+);
 
 const MAX_ACTOR_ID_CHARS = 128;
 const ACTOR_ID_SAFE_PATTERN = /^[\w.-@+:/]{1,128}$/;
