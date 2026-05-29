@@ -19,6 +19,9 @@ jobs:
     name: GST-64 Chromium smoke gate
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+      PLAYWRIGHT_INSTALL_WITH_DEPS: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +40,14 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Restore Playwright browser cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-chromium-${{ runner.os }}-
 
       - name: Run GST-64 smoke gate
         env:
