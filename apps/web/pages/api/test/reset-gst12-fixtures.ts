@@ -1,19 +1,26 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-
 import { resetGst12Fixtures } from '@/data/gst12Fixtures';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export const config = {
+  runtime: 'edge',
+};
+
+export default function handler(req: Request) {
   if (process.env.NODE_ENV === 'production' && process.env.CI !== 'true') {
-    res.status(404).end();
-    return;
+    return new Response(null, { status: 404 });
   }
 
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
-    return;
+    return Response.json(
+      { error: 'METHOD_NOT_ALLOWED' },
+      {
+        status: 405,
+        headers: {
+          Allow: 'POST',
+        },
+      },
+    );
   }
 
   resetGst12Fixtures();
-  res.status(204).end();
+  return new Response(null, { status: 204 });
 }
