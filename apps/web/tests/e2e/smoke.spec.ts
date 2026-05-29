@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.request.post('/api/test/reset-gst12-fixtures');
+});
+
 test('home page links to phase-1 routes', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'CIPP-GoogleExtension' })).toBeVisible();
@@ -33,7 +37,7 @@ test('partial path: inconsistent user supports retry affordance and resolves', a
 
   await expect(page.getByText('M365: Suspended')).toBeVisible();
   await expect(page.getByText('Google: Suspended')).toBeVisible();
-  await expect(page.getByText('Suspended')).toBeVisible();
+  await expect(page.getByText('Suspended', { exact: true })).toBeVisible();
 });
 
 test('typed machine-parseable error is rendered in UI on retry failure', async ({ page }) => {
