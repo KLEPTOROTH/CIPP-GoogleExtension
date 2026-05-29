@@ -43,4 +43,20 @@ describe('web smoke', () => {
       license: 'AGPL-3.0-only',
     });
   });
+
+  it('falls back for empty source manifest env values', () => {
+    expect(
+      buildSourceManifest({
+        SOURCE_COMMIT_SHA: '',
+        SOURCE_TAG: '',
+        SOURCE_REPO_URL: '',
+        SOURCE_LICENSE: '',
+      }),
+    ).toEqual({
+      commitSha: 'unknown',
+      tag: 'unknown',
+      repoUrl: 'https://github.com/KLEPTOROTH/CIPP-GoogleExtension',
+      license: 'AGPL-3.0',
+    });
+  });
 });

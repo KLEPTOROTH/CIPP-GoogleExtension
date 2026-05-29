@@ -42,7 +42,10 @@ checkout of the commit intended for release:
 pnpm install --frozen-lockfile
 
 export SOURCE_COMMIT_SHA="$(git rev-parse HEAD)"
-export SOURCE_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo untagged)"
+export SOURCE_TAG="$(git tag --points-at HEAD | sort -V | tail -n 1)"
+if [ -z "$SOURCE_TAG" ]; then
+  export SOURCE_TAG="untagged"
+fi
 export SOURCE_REPO_URL="https://github.com/KLEPTOROTH/CIPP-GoogleExtension"
 export SOURCE_LICENSE="AGPL-3.0"
 

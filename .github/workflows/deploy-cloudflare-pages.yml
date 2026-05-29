@@ -60,7 +60,10 @@ jobs:
       - name: Resolve source tag
         id: source
         run: |
-          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "untagged")
+          tag=$(git tag --points-at HEAD | sort -V | tail -n 1)
+          if [ -z "$tag" ]; then
+            tag="untagged"
+          fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Build static web export
