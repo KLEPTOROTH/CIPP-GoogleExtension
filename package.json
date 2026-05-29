@@ -15,9 +15,12 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:e2e:install": "bash tools/test/provision-playwright-chromium.sh",
+    "test:e2e:gst64": "bash tools/test/run-gst64-playwright-gate.sh"
   },
   "devDependencies": {
+    "@playwright/test": "1.49.1",
     "prettier": "3.3.3",
     "tsx": "4.19.1",
     "turbo": "2.1.3",
