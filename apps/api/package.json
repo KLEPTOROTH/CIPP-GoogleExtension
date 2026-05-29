@@ -10,12 +10,15 @@
     "start": "func start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --config ../../vitest.config.ts"
+    "test": "pnpm run test:node && pnpm run test:vitest",
+    "test:node": "tsx --test test/cipp-store-factory.test.ts test/source.test.ts",
+    "test:vitest": "vitest run --config ../../vitest.config.ts test/cipp-sync.test.ts test/health.test.ts test/issue-liveness-policy.test.ts test/issue-lifecycle-mutation.test.ts test/issue-lifecycle-durable-cas.test.ts"
   },
   "dependencies": {
     "@azure/data-tables": "13.3.2",
     "@azure/functions": "4.5.1",
     "@cipp-google/adapter-cipp": "workspace:*",
+    "@cipp-google/audit": "workspace:*",
     "@cipp-google/core": "workspace:*"
   },
   "devDependencies": {
