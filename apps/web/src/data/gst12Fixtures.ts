@@ -155,14 +155,6 @@ const auditSeed: UserAuditRow[] = [
 const users = new Map<string, MergedUserRow>(userSeeds.map((user) => [`${user.customerId}::${user.key}`, { ...user }]));
 const auditLog: UserAuditRow[] = [...auditSeed];
 
-export function resetGst12Fixtures(): void {
-  users.clear();
-  for (const user of userSeeds) {
-    users.set(key(user.customerId, user.key), { ...user });
-  }
-  auditLog.splice(0, auditLog.length, ...auditSeed);
-}
-
 function clone<T>(value: T): T {
   return structuredClone(value);
 }

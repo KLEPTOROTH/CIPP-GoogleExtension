@@ -1,10 +1,5 @@
 import { expect, test } from '@playwright/test';
 
-test.beforeEach(async ({ page }) => {
-  const response = await page.request.post('/api/test/reset-gst12-fixtures');
-  expect(response.ok()).toBe(true);
-});
-
 test('home page links to phase-1 routes', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'CIPP-GoogleExtension' })).toBeVisible();
