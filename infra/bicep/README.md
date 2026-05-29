@@ -4,11 +4,11 @@ Phase 0 Azure baseline for the CIPP Google Extension backend.
 
 ## Files
 
-| File              | Purpose                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| `main.bicep`      | Resource declarations: Function App, Storage, Key Vault, App Insights, Static Web App, RBAC. |
-| `dev.bicepparam`  | Per-environment values for `dev`. Free/cheap SKUs, deploys on PR.                            |
-| `prod.bicepparam` | Per-environment values for `prod`. Premium SKUs, manual approve.                             |
+| File | Purpose |
+|---|---|
+| `main.bicep` | Resource declarations: Function App, Storage, Key Vault, App Insights, Static Web App, RBAC. |
+| `dev.bicepparam` | Per-environment values for `dev`. Free/cheap SKUs, deploys on PR. |
+| `prod.bicepparam` | Per-environment values for `prod`. Premium SKUs, manual approve. |
 
 ## Pre-deploy human action (one-time per subscription)
 

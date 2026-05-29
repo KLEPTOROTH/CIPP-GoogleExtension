@@ -43,15 +43,15 @@ Per environment (`dev`, `prod`), in the Azure subscription that owns the resourc
    - `AZURE_${env}_RG` (e.g. `AZURE_DEV_RG`) — resource group name.
 6. Paste the identity's `principalId` into `infra/bicep/${env}.bicepparam` → `deployIdentityPrincipalId` and merge.
 
-After step 6 the first deploy succeeds and creates the rest of the baseline.
+Until step 5 lands, every deploy-azure.yml job is skipped (green) via the `vars.AZURE_DEPLOY_CLIENT_ID != ''` guard. After step 6 the first deploy succeeds and creates the rest of the baseline.
 
 ## What the workflow does on each event
 
-| Event                                               | Jobs                                 | Effect                                                                               |
-| --------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
-| PR touching `infra/**` or `apps/api/**`             | `what-if-dev`                        | Runs `az deployment group what-if` against dev. No apply.                            |
-| Push to `main` touching `infra/**` or `apps/api/**` | `deploy-dev`                         | Applies Bicep to dev. Stamps `SOURCE_COMMIT_SHA` + `SOURCE_TAG` on the Function App. |
-| `workflow_dispatch` with `environment=prod`         | `deploy-prod` (after manual approve) | Applies Bicep to prod. Same SHA/tag stamping.                                        |
+| Event | Jobs | Effect |
+|---|---|---|
+| PR touching `infra/**` or `apps/api/**` | `what-if-dev` | Runs `az deployment group what-if` against dev. No apply. |
+| Push to `main` touching `infra/**` or `apps/api/**` | `deploy-dev` | Applies Bicep to dev. Stamps `SOURCE_COMMIT_SHA` + `SOURCE_TAG` on the Function App. |
+| `workflow_dispatch` with `environment=prod` | `deploy-prod` (after manual approve) | Applies Bicep to prod. Same SHA/tag stamping. |
 
 ## AGPL §13 — keeping `/source` honest
 

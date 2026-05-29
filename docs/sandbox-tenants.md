@@ -4,10 +4,10 @@ Per [GST-4 plan §6 R9](/GST/issues/GST-4#document-plan): nightly sandbox CI nee
 
 ## Status
 
-| Sandbox                              | Plan                                        | Status                                                                                                                                   | Renewal cadence                                                                                                                    | Human owner                                                 |
-| ------------------------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Microsoft 365 Developer Program      | Free, 25 E5 user licenses                   | **Not yet provisioned.** Subscription required from the human Azure account owner before [GST-14](/GST/issues/GST-14) onboarding starts. | Auto-renews every 90 days **only** if the tenant has recorded developer activity (sign-ins, Graph calls). Inactive tenants expire. | Release Engineer (renewal) + QA Engineer (activity).        |
-| Google Workspace Cloud Identity Free | Free, ≥5 test users via Cloud Identity Free | **Not yet provisioned.** Cloud Identity Free signup required (one-time).                                                                 | No expiry, but ≤50 users per organization.                                                                                         | Release Engineer (provisioning) + QA Engineer (test users). |
+| Sandbox | Plan | Status | Renewal cadence | Human owner |
+|---|---|---|---|---|
+| Microsoft 365 Developer Program | Free, 25 E5 user licenses | **Not yet provisioned.** Subscription required from the human Azure account owner before [GST-14](/GST/issues/GST-14) onboarding starts. | Auto-renews every 90 days **only** if the tenant has recorded developer activity (sign-ins, Graph calls). Inactive tenants expire. | Release Engineer (renewal) + QA Engineer (activity). |
+| Google Workspace Cloud Identity Free | Free, ≥5 test users via Cloud Identity Free | **Not yet provisioned.** Cloud Identity Free signup required (one-time). | No expiry, but ≤50 users per organization. | Release Engineer (provisioning) + QA Engineer (test users). |
 
 Status is **pre-Phase-1**: this issue (GST-8) documents the path. Provisioning the tenants themselves is a human action and is scheduled inside [GST-14](/GST/issues/GST-14) (M365) and [GST-10](/GST/issues/GST-10) (Google).
 

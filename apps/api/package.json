@@ -8,16 +8,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "func start",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --config ../../vitest.config.ts"
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
-    "@azure/data-tables": "13.3.2",
     "@azure/functions": "4.5.1",
-    "@cipp-google/adapter-cipp": "workspace:*",
-    "@cipp-google/adapter-mock": "workspace:*",
-    "@cipp-google/audit": "workspace:*",
     "@cipp-google/core": "workspace:*"
   },
   "devDependencies": {
@@ -25,7 +21,6 @@
     "@types/node": "20.16.5",
     "eslint": "8.57.1",
     "eslint-config-prettier": "9.1.0",
-    "eslint-import-resolver-typescript": "3.6.3",
     "eslint-plugin-import": "2.30.0",
     "typescript": "5.5.4"
   }
