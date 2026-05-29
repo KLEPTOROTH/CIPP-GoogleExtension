@@ -18,6 +18,7 @@ import {
 import SuspensionStatus from '@/components/SuspensionStatus';
 import UnifiedSuspendButton from '@/components/UnifiedSuspendButton';
 import TypedErrorBanner from '@/components/TypedErrorBanner';
+import { isUnifiedActionDisabled } from '@/lib/userActionState';
 
 interface CustomerUserPageProps {
   customerId: string;
@@ -52,11 +53,16 @@ export const getStaticProps: GetStaticProps<CustomerUserPageProps> = ({ params }
 export default function CustomerUserPage({ customerId, userKey }: CustomerUserPageProps) {
   const router = useRouter();
 
+  const [isHydrated, setIsHydrated] = useState(false);
   const [status, setStatus] = useState<ActionOutcome>('success-both');
   const [cachedUser, setCachedUser] = useState<MergedUserRow | undefined>(() =>
     getUser(customerId, userKey),
   );
   const [error, setError] = useState<ActionFailure | null>(null);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!customerId || !userKey) {
@@ -75,6 +81,7 @@ export default function CustomerUserPage({ customerId, userKey }: CustomerUserPa
 
   const overall = getOverallStatus(user);
   const action: ActionVerb = overall === 'Active' ? 'suspend' : 'resume';
+  const actionDisabled = isUnifiedActionDisabled(overall, isHydrated);
 
   function run(actionVerb: ActionVerb): void {
     if (!customerId || !userKey) {
@@ -136,7 +143,7 @@ export default function CustomerUserPage({ customerId, userKey }: CustomerUserPa
             <UnifiedSuspendButton
               action={action}
               outcome={status}
-              disabled={overall === 'Inconsistent'}
+              disabled={actionDisabled}
               onClick={() => run(action)}
             />
           </Box>
