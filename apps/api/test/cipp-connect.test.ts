@@ -88,6 +88,39 @@ describe('cipp connect lifecycle', () => {
     ]);
   });
 
+  it('stays connected without throwing when the initial import fails', async () => {
+    let calls = 0;
+    const service = new CippConnectService({
+      integrationStore: new InMemoryCippConnectionStore(),
+      syncStore: new InMemoryCippSyncStore(() => '2026-05-29T00:00:00.000Z'),
+      env: {
+        CIPP_API_SECRET_REF: 'kv://cipp/token',
+        CIPP_API_TOKEN: 'super-secret-value',
+      } as NodeJS.ProcessEnv,
+      now: () => '2026-05-29T00:00:00.000Z',
+      adapterFactory: () => ({
+        async listCustomers() {
+          calls += 1;
+          // First call is validation (must succeed); the import call fails.
+          if (calls === 1) {
+            return { ok: true as const, value: [{ id: 'cust-1', name: 'Acme' }] };
+          }
+          return { ok: false as const, error: new Error('cipp 503 unavailable') };
+        },
+      }),
+    });
+
+    const result = await service.connect({
+      baseUrl: 'https://cipp.example.test',
+      secretRef: 'kv://cipp/token',
+    });
+
+    expect(result.validation.ok).toBe(true);
+    expect(result.importSummary).toBeUndefined();
+    expect(result.state.status).toBe('connected');
+    expect((await service.status()).status).toBe('connected');
+  });
+
   it('keeps customer mappings stable across reconnect', async () => {
     const { service } = createService();
     await service.connect({

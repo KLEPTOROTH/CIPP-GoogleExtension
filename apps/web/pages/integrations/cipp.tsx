@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Box,
@@ -37,6 +37,34 @@ export default function CippIntegrationPage() {
   const [result, setResult] = useState<ActionResult | undefined>();
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    async function loadStatus() {
+      try {
+        const response = await fetch('/api/v1/integrations/cipp/status');
+        if (!response.ok) {
+          return;
+        }
+        const body = (await response.json()) as { state?: IntegrationState };
+        if (active && body.state) {
+          setState(body.state);
+          if (body.state.baseUrl) {
+            setBaseUrl(body.state.baseUrl);
+          }
+          if (body.state.secretRef) {
+            setSecretRef(body.state.secretRef);
+          }
+        }
+      } catch {
+        // Surface nothing on mount; the page falls back to the disconnected default.
+      }
+    }
+    void loadStatus();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function submit(action: 'validate' | 'connect' | 'reconnect' | 'disconnect' | 'import') {
     setBusy(true);
     setResult(undefined);
@@ -67,6 +95,11 @@ export default function CippIntegrationPage() {
         message: response.ok
           ? successMessage(action, summary)
           : body.validation?.error?.message ?? body.error?.message ?? 'CIPP request failed.',
+      });
+    } catch {
+      setResult({
+        ok: false,
+        message: 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setBusy(false);

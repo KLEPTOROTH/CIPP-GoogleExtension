@@ -274,8 +274,14 @@ export class CippConnectService {
     }
 
     await this.saveConnectedState(input, validation.checkedAt);
-    const importSummary = await this.importCustomers();
-    return { validation, state: importSummary.state, importSummary: importSummary.summary };
+    try {
+      const importSummary = await this.importCustomers();
+      return { validation, state: importSummary.state, importSummary: importSummary.summary };
+    } catch {
+      // Connection is saved; a failed initial import should not surface as a 500.
+      // Report the connected state and let the caller retry the import.
+      return { validation, state: await this.integrationStore.get() };
+    }
   }
 
   async reconnect(input: CippConnectionInput): Promise<{
@@ -443,7 +449,7 @@ function resolveSecretRef(secretRef: string, env: NodeJS.ProcessEnv): string | u
     return env.CIPP_API_TOKEN;
   }
 
-  const envName = `CIPP_SECRET_${secretRef.replace(/[^A-Za-z0-9]/g, '_').toUpperCase()}`;
+  const envName = `CIPP_SECRET_${secretRef.replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()}`;
   return env[envName];
 }
 

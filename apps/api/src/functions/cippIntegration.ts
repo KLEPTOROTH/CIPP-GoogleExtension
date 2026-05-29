@@ -93,8 +93,11 @@ export async function importCippCustomers(
   try {
     const result = await service.importCustomers();
     return { status: 200, jsonBody: result };
-  } catch {
-    return problem(409, 'NOT_CONNECTED', 'Connect to CIPP before importing customers.');
+  } catch (error) {
+    if ((error as Error)?.message === 'cipp_integration_not_connected') {
+      return problem(409, 'NOT_CONNECTED', 'Connect to CIPP before importing customers.');
+    }
+    return problem(502, 'IMPORT_FAILED', 'Failed to import customers from CIPP.');
   }
 }
 

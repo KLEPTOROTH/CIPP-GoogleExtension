@@ -326,7 +326,16 @@ export class InMemoryCippSyncStore implements CippSyncStore {
 
     for (const record of remote) {
       const local = this.mirror.get(record.customerId);
-      if (!local || local.sourceVersion < record.sourceVersion) {
+      const fieldsChanged =
+        !!local &&
+        (local.displayName !== record.displayName ||
+          local.cippTenantId !== record.cippTenantId ||
+          local.bindingState !== record.bindingState);
+      if (
+        !local ||
+        local.sourceVersion < record.sourceVersion ||
+        (local.sourceVersion === record.sourceVersion && fieldsChanged)
+      ) {
         this.mirror.set(record.customerId, {
           ...record,
           lastObservedAt: nowIso(this.now),
@@ -513,7 +522,16 @@ export class DurableCippSyncStore implements CippSyncStore {
 
     for (const record of remote) {
       const localRow = byId.get(record.customerId);
-      if (!localRow || localRow.sourceVersion < record.sourceVersion) {
+      const fieldsChanged =
+        !!localRow &&
+        (localRow.displayName !== record.displayName ||
+          localRow.cippTenantId !== record.cippTenantId ||
+          localRow.bindingState !== record.bindingState);
+      if (
+        !localRow ||
+        localRow.sourceVersion < record.sourceVersion ||
+        (localRow.sourceVersion === record.sourceVersion && fieldsChanged)
+      ) {
         await this.upsertMirror({
           customerId: record.customerId,
           displayName: record.displayName,
