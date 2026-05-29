@@ -59,6 +59,8 @@ interface RawMirrorEntity extends TableEntity {
 interface RawEventEntity extends TableEntity {
   PartitionKey: string;
   RowKey: string;
+  partitionKey: string;
+  rowKey: string;
   customerId: string;
   eventType: CippWebhookEvent['eventType'];
   eventId: string;
@@ -689,6 +691,8 @@ export class DurableCippSyncStore implements CippSyncStore {
     return {
       PartitionKey: EVENT_PARTITION_KEY,
       RowKey: params.event.eventId,
+      partitionKey: EVENT_PARTITION_KEY,
+      rowKey: params.event.eventId,
       customerId: params.event.customerId,
       eventType: params.event.eventType,
       eventId: params.event.eventId,

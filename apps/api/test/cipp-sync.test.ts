@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { runReconcile } from '../src/cipp/reconcile.js';
-import { InMemoryCippSyncStore } from '../src/cipp/store.js';
+import { DurableCippSyncStore, InMemoryCippSyncStore } from '../src/cipp/store.js';
 import { buildSignature, processWebhookEvent } from '../src/cipp/webhook.js';
 
 describe('cipp webhook idempotency + reconcile healing', () => {
@@ -223,5 +223,54 @@ describe('cipp webhook idempotency + reconcile healing', () => {
 
     assert.equal(totalApplied, 2);
     assert.equal(snapshot.length, 2);
+  });
+
+  it('builds durable event entities with Azure Tables SDK lowercase keys', () => {
+    const store = Object.create(DurableCippSyncStore.prototype) as {
+      buildEventEntity(params: {
+        event: {
+          eventId: string;
+          eventType: 'customer.updated';
+          customerId: string;
+          displayName: string;
+          cippTenantId: string;
+          sourceVersion: number;
+          eventTime: string;
+        };
+        payloadHash: string;
+        firstSeenAt: string;
+        status: 'received';
+      }): Record<string, unknown>;
+    };
+
+    const entity = store.buildEventEntity({
+      event: {
+        eventId: 'evt-lowercase-keys',
+        eventType: 'customer.updated',
+        customerId: 'cust-lowercase-keys',
+        displayName: 'Lowercase Keys',
+        cippTenantId: 'tenant-lowercase-keys',
+        sourceVersion: 1,
+        eventTime: '2026-05-29T00:00:00.000Z',
+      },
+      payloadHash: 'payload-hash',
+      firstSeenAt: '2026-05-29T00:00:01.000Z',
+      status: 'received',
+    });
+
+    assert.deepEqual(
+      {
+        PartitionKey: entity.PartitionKey,
+        RowKey: entity.RowKey,
+        partitionKey: entity.partitionKey,
+        rowKey: entity.rowKey,
+      },
+      {
+        PartitionKey: 'events',
+        RowKey: 'evt-lowercase-keys',
+        partitionKey: 'events',
+        rowKey: 'evt-lowercase-keys',
+      },
+    );
   });
 });

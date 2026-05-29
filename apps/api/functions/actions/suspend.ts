@@ -285,6 +285,7 @@ export async function createSuspendActionHandler(
     );
     return createAuditStoreNotConfiguredResponse();
   }
+  const durableAuditStore = auditStore;
 
   const actionResult = await executeAction({
     action,
@@ -293,7 +294,7 @@ export async function createSuspendActionHandler(
     actorId,
     adapters,
     writeAudit: async (audit) => {
-      await auditStore.writeAuditRecord(audit);
+      await durableAuditStore.writeAuditRecord(audit);
     },
   });
 
