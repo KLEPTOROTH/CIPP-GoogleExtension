@@ -54,6 +54,7 @@ interface RawMirrorEntity extends TableEntity {
   lastObservedAt: string;
   lastWebhookAt: string;
   bindingState: CustomerMirrorRecord['bindingState'];
+  etag?: string;
 }
 
 interface RawEventEntity extends TableEntity {
@@ -577,17 +578,8 @@ export class DurableCippSyncStore implements CippSyncStore {
       };
     }
 
-    const existing = await this.getCustomer(event.customerId);
     const incomingVersion = event.sourceVersion ?? 0;
-    if (existing && incomingVersion < existing.sourceVersion) {
-      await this.updateEventStatus(event.eventId, {
-        status: 'stale',
-        processedAt: nowIso(this.now),
-      });
-      return { accepted: false, reason: 'stale' };
-    }
-
-    await this.upsertMirror({
+    const writeApplied = await this.upsertMirrorIfNewer({
       customerId: event.customerId,
       displayName: event.displayName,
       cippTenantId: event.cippTenantId,
@@ -596,6 +588,14 @@ export class DurableCippSyncStore implements CippSyncStore {
       lastWebhookAt: event.eventTime,
       bindingState: normalizeBindingState(event.eventType),
     });
+
+    if (!writeApplied) {
+      await this.updateEventStatus(event.eventId, {
+        status: 'stale',
+        processedAt: nowIso(this.now),
+      });
+      return { accepted: false, reason: 'stale' };
+    }
     await this.updateEventStatus(event.eventId, {
       status: 'applied',
       processedAt: nowIso(this.now),
@@ -640,23 +640,92 @@ export class DurableCippSyncStore implements CippSyncStore {
     await this.mirrorClient.upsertEntity(entity, 'Replace');
   }
 
+  private async upsertMirrorIfNewer(record: {
+    customerId: string;
+    displayName: string;
+    cippTenantId: string;
+    sourceVersion: number;
+    lastObservedAt: string;
+    lastWebhookAt: string;
+    bindingState: CustomerMirrorRecord['bindingState'];
+  }): Promise<boolean> {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      let existingEntity: RawMirrorEntity | undefined;
+      try {
+        existingEntity = await this.mirrorClient.getEntity<RawMirrorEntity>(
+          MIRROR_PARTITION_KEY,
+          record.customerId,
+        );
+      } catch (error) {
+        if (!isNotFoundError(error)) {
+          throw error;
+        }
+      }
+
+      const existingVersion = existingEntity ? asNumber(existingEntity.sourceVersion) : undefined;
+      if (existingVersion !== undefined && record.sourceVersion < existingVersion) {
+        return false;
+      }
+
+      const entity: TableEntity<RawMirrorEntity> = {
+        PartitionKey: MIRROR_PARTITION_KEY,
+        RowKey: record.customerId,
+        partitionKey: MIRROR_PARTITION_KEY,
+        rowKey: record.customerId,
+        customerId: record.customerId,
+        displayName: record.displayName,
+        cippTenantId: record.cippTenantId,
+        sourceVersion: record.sourceVersion,
+        lastObservedAt: record.lastObservedAt,
+        lastWebhookAt: record.lastWebhookAt,
+        bindingState: record.bindingState,
+      };
+
+      if (!existingEntity) {
+        try {
+          await this.mirrorClient.createEntity(entity);
+          return true;
+        } catch (error) {
+          if (!isConflictError(error)) {
+            throw error;
+          }
+          continue;
+        }
+      }
+
+      const etag = (existingEntity as { etag?: string }).etag;
+      if (!etag) {
+        await this.upsertMirror(record);
+        return true;
+      }
+
+      try {
+        await this.mirrorClient.updateEntity(entity, 'Replace', { etag });
+        return true;
+      } catch (error) {
+        if (isConflictError(error)) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    return false;
+  }
+
   private async updateEventStatus(
     eventId: string,
     updates: Pick<EventRecord, 'status' | 'processedAt'>,
   ): Promise<void> {
-    try {
-      await this.eventClient.updateEntity(
-        {
-          PartitionKey: EVENT_PARTITION_KEY,
-          RowKey: eventId,
-          status: updates.status,
-          processedAt: updates.processedAt,
-        } as TableEntity<RawEventEntity>,
-        'Merge',
-      );
-    } catch {
-      // Ignore transient missing rows during cleanup.
-    }
+    await this.eventClient.updateEntity(
+      {
+        PartitionKey: EVENT_PARTITION_KEY,
+        RowKey: eventId,
+        status: updates.status,
+        processedAt: updates.processedAt,
+      } as TableEntity<RawEventEntity>,
+      'Merge',
+    );
   }
 
   private async claimEventForProcessing(event: EventRecord): Promise<boolean> {

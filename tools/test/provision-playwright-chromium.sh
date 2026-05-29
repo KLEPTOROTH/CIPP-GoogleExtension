@@ -12,11 +12,11 @@ mkdir -p "${PLAYWRIGHT_BROWSERS_PATH}"
 echo "Installing Chromium browser bundle via Playwright..."
 if command -v timeout >/dev/null 2>&1; then
   set +e
-  timeout 240 pnpm exec playwright install --force chromium
+  timeout 600 pnpm exec playwright install --force chromium
   install_exit=$?
   set -e
   if [[ "${install_exit}" -eq 124 ]]; then
-    echo "ERROR: Playwright install timed out after 240s (download/extract pipeline stalled)." >&2
+    echo "ERROR: Playwright install timed out after 600s (download/extract pipeline stalled)." >&2
     echo "Likely runner-image incompatibility (this host reports unsupported OS fallback in Playwright install logs)." >&2
     echo "Unblock: provide a Chromium-ready runner image or a supported OS runtime where install completes." >&2
     exit 124

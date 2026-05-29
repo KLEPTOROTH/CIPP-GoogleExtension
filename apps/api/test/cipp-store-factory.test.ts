@@ -1,5 +1,6 @@
-import { TableClient } from '@azure/data-tables';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { TableClient } from '@azure/data-tables';
 
 import { createCippSyncStore, InMemoryCippSyncStore } from '../src/cipp/store.js';
 
@@ -17,7 +18,7 @@ describe('createCippSyncStore durable fallback policy', () => {
       createCippSyncStore({
         CIPP_WEBHOOK_STORAGE_CONNECTION_STRING: 'UseDevelopmentStorage=true',
       } as NodeJS.ProcessEnv),
-    ).toThrow('durable init failed');
+    ).toThrow(/durable init failed/);
   });
 
   it('falls back to in-memory only when explicit fallback flag is true', () => {
