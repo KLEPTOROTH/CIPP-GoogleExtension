@@ -23,7 +23,7 @@ if command -v timeout >/dev/null 2>&1; then
   install_exit=0
   for attempt in 1 2; do
     set +e
-    timeout "${INSTALL_TIMEOUT_SECONDS}" pnpm --filter @cipp-google/web exec playwright "${install_args[@]}"
+    timeout "${INSTALL_TIMEOUT_SECONDS}" pnpm exec playwright "${install_args[@]}"
     install_exit=$?
     set -e
     if [[ "${install_exit}" -eq 0 ]]; then
@@ -46,11 +46,11 @@ if command -v timeout >/dev/null 2>&1; then
     exit "${install_exit}"
   fi
 else
-  pnpm --filter @cipp-google/web exec playwright "${install_args[@]}"
+  pnpm exec playwright "${install_args[@]}"
 fi
 
 echo "Verifying Chromium executable path..."
-executable_path="$(pnpm --filter @cipp-google/web exec node -e 'const { chromium } = require("@playwright/test"); process.stdout.write(chromium.executablePath());')"
+executable_path="$(pnpm exec node -e 'const { chromium } = require("@playwright/test"); process.stdout.write(chromium.executablePath());')"
 
 if [[ ! -x "${executable_path}" ]]; then
   echo "ERROR: Chromium executable is missing or not executable at ${executable_path}" >&2
