@@ -33,19 +33,29 @@ export const getStaticPaths: GetStaticPaths = () => ({
   fallback: false,
 });
 
-export const getStaticProps: GetStaticProps<CustomerUserPageProps> = ({ params }) => ({
-  props: {
-    customerId: String(params?.id ?? ''),
-    userKey: String(params?.key ?? ''),
-  },
-});
+export const getStaticProps: GetStaticProps<CustomerUserPageProps> = ({ params }) => {
+  const customerId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const userKey = Array.isArray(params?.key) ? params.key[0] : params?.key;
+
+  if (!customerId || !userKey || !getUser(customerId, userKey)) {
+    return { notFound: true };
+  }
+
+  return {
+    props: {
+      customerId,
+      userKey,
+    },
+  };
+};
 
 export default function CustomerUserPage({ customerId, userKey }: CustomerUserPageProps) {
   const router = useRouter();
-  const isReady = router.isReady;
 
   const [status, setStatus] = useState<ActionOutcome>('success-both');
-  const [cachedUser, setCachedUser] = useState<MergedUserRow | undefined>(undefined);
+  const [cachedUser, setCachedUser] = useState<MergedUserRow | undefined>(() =>
+    getUser(customerId, userKey),
+  );
   const [error, setError] = useState<ActionFailure | null>(null);
 
   useEffect(() => {
@@ -59,9 +69,6 @@ export default function CustomerUserPage({ customerId, userKey }: CustomerUserPa
 
   const user = cachedUser;
 
-  if (!isReady) {
-    return <Typography>Loading user...</Typography>;
-  }
   if (!user) {
     return <Typography>User not found.</Typography>;
   }
