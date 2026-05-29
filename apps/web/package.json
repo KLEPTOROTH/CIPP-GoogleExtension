@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "NODE_ENV=development next dev",
     "qa:gst41": "NODE_ENV=development PORT=3010 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3010 playwright test --config playwright.config.ts --grep \"GST-41\"",
-    "build": "next build",
+    "build": "pnpm --filter @cipp-google/core build && next build",
     "start": "next start",
     "lint": "next lint --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
