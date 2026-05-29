@@ -2,10 +2,19 @@ import { describe, expect, it } from 'vitest';
 
 import { CORE_PACKAGE_NAME } from '@cipp-google/core';
 import { buildSourceManifest, buildSourceUrl } from '../src/sourceManifest';
+import { isUnifiedActionDisabled } from '../src/lib/userActionState';
 
 describe('web smoke', () => {
   it('links @cipp-google/core', () => {
     expect(CORE_PACKAGE_NAME).toBe('@cipp-google/core');
+  });
+
+  it('disables unified user actions until hydration and for non-actionable states', () => {
+    expect(isUnifiedActionDisabled('Active', false)).toBe(true);
+    expect(isUnifiedActionDisabled('Active', true)).toBe(false);
+    expect(isUnifiedActionDisabled('Suspended', true)).toBe(false);
+    expect(isUnifiedActionDisabled('Inconsistent', true)).toBe(true);
+    expect(isUnifiedActionDisabled('Unknown', true)).toBe(true);
   });
 
   it('builds source URLs from stamped tag or commit manifest values', () => {

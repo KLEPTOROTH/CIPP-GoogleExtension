@@ -85,6 +85,10 @@ test('typed machine-parseable error is rendered in UI on retry failure', async (
 test('keyboard navigation: suspend action + audit table row focus', async ({ page }) => {
   await page.goto('/customers/acme/users/user-001');
 
+  const suspendButton = page.getByRole('button', { name: 'Suspend in both systems' });
+  await expect(suspendButton).toBeVisible();
+  await expect(suspendButton).toBeEnabled();
+
   let focusedSuspend = false;
   for (let attempt = 0; attempt < 20; attempt += 1) {
     await page.keyboard.press('Tab');
