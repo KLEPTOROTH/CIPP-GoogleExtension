@@ -1,8 +1,9 @@
-import { strict as assert } from 'node:assert';
-import { test } from 'node:test';
+import { describe, expect, it } from 'vitest';
 
 import { CORE_PACKAGE_NAME } from '../src/index.js';
 
-test('core exports its package name constant', () => {
-  assert.equal(CORE_PACKAGE_NAME, '@cipp-google/core');
+describe('core package', () => {
+  it('exports its package name constant', () => {
+    expect(CORE_PACKAGE_NAME).toBe('@cipp-google/core');
+  });
 });

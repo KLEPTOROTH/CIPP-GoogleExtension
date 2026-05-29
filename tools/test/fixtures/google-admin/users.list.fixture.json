@@ -1,0 +1,23 @@
+[
+  {
+    "scope": "https://admin.googleapis.com:443",
+    "method": "GET",
+    "path": "/admin/directory/v1/users?customer=my_customer&maxResults=50",
+    "status": 200,
+    "response": {
+      "users": [
+        {
+          "id": "google-user-1",
+          "primaryEmail": "alice@example.invalid"
+        }
+      ],
+      "nextPageToken": null
+    },
+    "responseIsBinary": false,
+    "rawHeaders": ["Content-Type", "application/json"],
+    "reqheaders": {
+      "content-type": "application/json",
+      "accept": "application/json"
+    }
+  }
+]

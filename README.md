@@ -41,6 +41,10 @@ Useful scoped commands:
 - `pnpm --filter @cipp-google/api start` — Azure Functions local host
   (`func start` from the Azure Functions Core Tools).
 - `pnpm format` / `pnpm format:check` — Prettier across the workspace.
+- `pnpm test:e2e:install` — install and verify Chromium for Playwright in
+  a repo-local cache.
+- `pnpm test:e2e:gst64` — run the GST-64 Playwright smoke gate command
+  using the pinned environment contract.
 
 ## Repo layout
 

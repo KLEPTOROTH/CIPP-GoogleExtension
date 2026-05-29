@@ -1,0 +1,38 @@
+{
+  "name": "@cipp-google/audit",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "description": "Append-only audit write/read surface for action envelopes.",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts"
+  },
+  "dependencies": {
+    "@azure/data-tables": "13.3.0",
+    "@azure/storage-blob": "12.28.0",
+    "@cipp-google/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@cipp-google/eslint-config": "workspace:*",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0",
+    "eslint": "8.57.1",
+    "eslint-config-prettier": "9.1.0",
+    "tsx": "4.19.1",
+    "typescript": "5.5.4",
+    "vitest": "2.1.4"
+  }
+}
