@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'apps/web/**'
+      - 'packages/core/**'
+      - 'tools/test/**'
       - '.github/workflows/gst64-playwright-gate.yml'
       - 'package.json'
       - 'pnpm-lock.yaml'
