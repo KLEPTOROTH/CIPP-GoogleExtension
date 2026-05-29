@@ -60,7 +60,7 @@ jobs:
         env:
           PLAYWRIGHT_NO_WEBSERVER: '1'
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3100
-        run: pnpm --filter @cipp-google/web test:e2e -- tests/e2e/smoke.spec.ts
+        run: pnpm --filter @cipp-google/web exec playwright test --config playwright.config.ts -- tests/e2e/smoke.spec.ts
 
       - name: Upload Playwright artifacts
         id: upload_artifacts
