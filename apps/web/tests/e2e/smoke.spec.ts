@@ -45,7 +45,7 @@ test('typed machine-parseable error is rendered in UI on retry failure', async (
 
   await page.getByRole('button', { name: 'Retry Google' }).click();
 
-  await expect(page.getByText('API Error: INCONSISTENT_RETRY_REQUIRED')).toBeVisible();
+  await expect(page.getByText(/API Error\s+INCONSISTENT_RETRY_REQUIRED/)).toBeVisible();
   await expect(page.getByText(/requestId:/)).toBeVisible();
 });
 
