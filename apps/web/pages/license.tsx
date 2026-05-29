@@ -20,12 +20,12 @@ export default function LicensePage() {
               <Button component="a" href={licenseUrl} target="_blank" rel="noreferrer">
                 Read AGPL-3.0
               </Button>
-              <Link href="/source">
-                <Button>Source code</Button>
-              </Link>
-              <Link href="/">
-                <Button>Home</Button>
-              </Link>
+              <Button component={Link} href="/source">
+                Source code
+              </Button>
+              <Button component={Link} href="/">
+                Home
+              </Button>
             </Stack>
           </Stack>
         </Paper>

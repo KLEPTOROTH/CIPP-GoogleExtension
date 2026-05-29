@@ -17,34 +17,29 @@ export default function HomePage() {
           <Typography>Quick links</Typography>
           <List>
             <ListItem>
-              <Link href="/customers">
-                <Button>Customers</Button>
-              </Link>
+              <Button component={Link} href="/customers">
+                Customers
+              </Button>
             </ListItem>
             <ListItem>
-              <Link href="/audit">
-                <Button>Audit</Button>
-              </Link>
+              <Button component={Link} href="/audit">
+                Audit
+              </Button>
             </ListItem>
             <ListItem>
-              <Link href="/integrations/cipp">
-                <Button>CIPP integration</Button>
-              </Link>
+              <Button component={Link} href="/integrations/cipp">
+                CIPP integration
+              </Button>
             </ListItem>
             <ListItem>
-              <Button
-                component="a"
-                href="https://github.com/KLEPTOROTH/CIPP-GoogleExtension"
-                target="_blank"
-                rel="noreferrer"
-              >
+              <Button component={Link} href="/source">
                 Source code
               </Button>
             </ListItem>
             <ListItem>
-              <Link href="/license">
-                <Button>License</Button>
-              </Link>
+              <Button component={Link} href="/license">
+                License
+              </Button>
             </ListItem>
           </List>
         </Paper>
