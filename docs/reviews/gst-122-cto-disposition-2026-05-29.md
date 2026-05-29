@@ -3,56 +3,54 @@
 Issue: GST-122  
 Scope: GST-119c QA liveness-policy regression and negative-path suite
 
-## Acknowledgement of latest QA state
+## Resume delta acknowledgement (2026-05-29)
 
-QA reported a valid blocker: required policy-code evidence is currently documentation-only and not enforced by runnable tests.
+Wake reason `issue_children_completed` is actionable: child implementation issue GST-123 is complete, so CTO action is to verify runnable evidence and route to QA for acceptance closure.
 
-## Source-scoped verification
+## CTO verification evidence
 
-Executed repository scan:
+### 1) Required policy code assertions are now executable
 
 ```bash
-rg -n "POLICY_CONTINUATION_REQUIRED|POLICY_BLOCKER_INCOMPLETE|POLICY_REVIEW_PATH_REQUIRED|POLICY_CHILDREN_UNRESOLVED" -S .
+rg -n "POLICY_CONTINUATION_REQUIRED|POLICY_BLOCKER_INCOMPLETE|POLICY_REVIEW_PATH_REQUIRED|POLICY_CHILDREN_UNRESOLVED" apps/api/test apps/api/src -S
 ```
 
-Observed matches:
-- `docs/reviews/gst-119-cto-lock-2026-05-29.md`
-- `docs/qa/GST-122-qa-liveness-negative-path-report-2026-05-29.md`
+Confirmed in runtime and tests:
+- `apps/api/src/cipp/issue-liveness-policy.ts`
+- `apps/api/test/issue-liveness-policy.test.ts`
 
-No executable tests or runtime policy-enforcement code in this repo assert those four policy violations.
+### 2) Targeted liveness-policy suite passes
 
-## Technical decision
+```bash
+pnpm vitest run --config vitest.config.ts apps/api/test/issue-liveness-policy.test.ts
+```
 
-This issue is a **source-scope mismatch** for implementation. The required liveness-policy engine/test surface is not present in `CIPP-GoogleExtension`; therefore GST-122 cannot be closed by adding tests here without introducing non-authoritative test stubs.
+Result:
+- Test files: 1 passed
+- Tests: 8 passed
+- Includes deterministic negative-path assertions for:
+  - `POLICY_CONTINUATION_REQUIRED`
+  - `POLICY_BLOCKER_INCOMPLETE`
+  - `POLICY_REVIEW_PATH_REQUIRED`
+  - `POLICY_CHILDREN_UNRESOLVED`
+- Includes legal-transition success paths.
+- Includes concurrent mixed legal/illegal transition determinism coverage.
 
-Locked decision:
-- Keep GST-122 blocked in this repo.
-- Implement policy enforcement + negative/concurrency tests in the repository that owns issue lifecycle transitions.
-- Return to QA validation in this repo context only after executable evidence artifact links are attached from the authoritative source.
+## Technical lock and QA gate
 
-## Required implementation packet (for Staff Engineer)
+CTO lock is satisfied for implementation readiness. Remaining gate is QA acceptance evidence for GST-122 based on the now-runnable suite.
 
-1. Add deterministic negative-path tests asserting exact error codes:
-   - `POLICY_CONTINUATION_REQUIRED`
-   - `POLICY_BLOCKER_INCOMPLETE`
-   - `POLICY_REVIEW_PATH_REQUIRED`
-   - `POLICY_CHILDREN_UNRESOLVED`
-2. Add legal-transition success tests for the same state graph.
-3. Add concurrency collision test proving stale/conflicting writes cannot bypass policy checks.
-4. Attach test command and pass output artifact to GST-122.
-
-## QA acceptance gate after unblock
-
-QA must verify, with runnable evidence, that:
+QA must validate and attach report evidence that:
 - invalid transitions reject with the exact four policy codes,
 - valid transitions succeed,
-- concurrent conflicting writes do not bypass policy checks.
+- concurrent conflicting requests cannot bypass policy checks.
 
-## Ownership and unblock action
+## Routing
 
-- Unblock owner: Staff Engineer (implementation) with CTO oversight.
-- Unblock action: land executable policy + test suite in the authoritative lifecycle-service repo, then post linked evidence back to GST-122 for QA rerun.
+- Staff Engineer: implementation complete for this scope (GST-123 done).
+- QA Engineer: execute final acceptance run and publish GST-122 QA report update.
+- CTO: final close after QA sign-off.
 
 ## Disposition
 
-Recommended status: `blocked` (first-class blocker: source-scope mismatch; owner/action named above).
+Recommended status: `in_review` (real reviewer path: QA Engineer acceptance validation on runnable suite).
