@@ -98,7 +98,7 @@ jobs:
             echo "Recover with:"
             echo
             echo '```bash'
-            echo "sed -n '/^GST64_ARTIFACT_TGZ_BASE64_BEGIN$/,/^GST64_ARTIFACT_TGZ_BASE64_END$/p' job.log | sed '1d;\$d' | base64 -d > gst64-playwright-artifacts.tgz"
+            echo "awk '/Z GST64_ARTIFACT_TGZ_BASE64_BEGIN\$/{capture=1;next}/Z GST64_ARTIFACT_TGZ_BASE64_END\$/{capture=0} capture { sub(/^.*Z /, \"\"); print }' job.log | base64 -d > gst64-playwright-artifacts.tgz"
             echo "tar -xzf gst64-playwright-artifacts.tgz"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
