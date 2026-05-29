@@ -1,11 +1,13 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-
 export interface SourceManifest {
   commitSha: string;
   tag: string;
   repoUrl: string;
   license: string;
 }
+
+export const config = {
+  runtime: 'edge',
+};
 
 export function buildSourceManifest(env: Partial<NodeJS.ProcessEnv> = process.env): SourceManifest {
   return {
@@ -16,7 +18,10 @@ export function buildSourceManifest(env: Partial<NodeJS.ProcessEnv> = process.en
   };
 }
 
-export default function source(_request: NextApiRequest, response: NextApiResponse<SourceManifest>) {
-  response.setHeader('Cache-Control', 'public, max-age=60');
-  response.status(200).json(buildSourceManifest());
+export default function source() {
+  return Response.json(buildSourceManifest(), {
+    headers: {
+      'Cache-Control': 'public, max-age=60',
+    },
+  });
 }
