@@ -177,6 +177,8 @@ export class InMemoryCippSyncStore implements CippSyncStore {
   private readonly mirror = new Map<string, CustomerMirrorRecord>();
   private readonly webhookEvents = new Map<string, EventRecord>();
 
+  constructor(private readonly now: () => string = () => new Date().toISOString()) {}
+
   snapshot(): Promise<CustomerMirrorRecord[]> {
     return Promise.resolve([...this.mirror.values()]);
   }
@@ -187,7 +189,7 @@ export class InMemoryCippSyncStore implements CippSyncStore {
 
   async enqueueWebhookEvent(event: CippWebhookEvent): Promise<ProcessResult> {
     const payloadHash = hashEvent(event);
-    const now = nowIso(() => new Date().toISOString());
+    const now = nowIso(this.now);
     const existing = this.webhookEvents.get(event.eventId);
 
     if (existing) {
@@ -214,7 +216,7 @@ export class InMemoryCippSyncStore implements CippSyncStore {
     }
     return this.applyQueuedEvent(
       event,
-      nowIso(() => new Date().toISOString()),
+      nowIso(this.now),
     );
   }
 
@@ -233,7 +235,7 @@ export class InMemoryCippSyncStore implements CippSyncStore {
     let stale = 0;
     let duplicate = 0;
     let replayConflicts = 0;
-    const now = nowIso(() => new Date().toISOString());
+    const now = nowIso(this.now);
 
     const claimed: EventRecord[] = [];
     for (const entry of received) {
@@ -295,7 +297,7 @@ export class InMemoryCippSyncStore implements CippSyncStore {
       this.webhookEvents.set(event.eventId, {
         ...queueRecord,
         status: 'stale',
-        processedAt: nowIso(() => new Date().toISOString()),
+        processedAt: nowIso(this.now),
       });
       return { accepted: false, reason: 'stale' };
     }
@@ -312,7 +314,7 @@ export class InMemoryCippSyncStore implements CippSyncStore {
     this.webhookEvents.set(event.eventId, {
       ...queueRecord,
       status: 'applied',
-      processedAt: nowIso(() => new Date().toISOString()),
+      processedAt: nowIso(this.now),
     });
 
     return { accepted: true };
@@ -327,7 +329,7 @@ export class InMemoryCippSyncStore implements CippSyncStore {
       if (!local || local.sourceVersion < record.sourceVersion) {
         this.mirror.set(record.customerId, {
           ...record,
-          lastObservedAt: nowIso(() => new Date().toISOString()),
+          lastObservedAt: nowIso(this.now),
         });
         repaired += 1;
       }
@@ -341,7 +343,7 @@ export class InMemoryCippSyncStore implements CippSyncStore {
       this.mirror.set(local.customerId, {
         ...local,
         bindingState: 'unbound',
-        lastObservedAt: nowIso(() => new Date().toISOString()),
+        lastObservedAt: nowIso(this.now),
       });
       repaired += 1;
     }

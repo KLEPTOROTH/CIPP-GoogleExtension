@@ -26,6 +26,11 @@ export default function HomePage() {
                 <Button>Audit</Button>
               </Link>
             </ListItem>
+            <ListItem>
+              <Link href="/integrations/cipp">
+                <Button>CIPP integration</Button>
+              </Link>
+            </ListItem>
           </List>
         </Paper>
       </Box>

@@ -2,9 +2,10 @@
 
 ## Status in current workspace
 
-- `packages/adapter-cipp` is still not present.
-- CIPP credential lifecycle endpoints are still absent from `apps/api/src` (`validate`, `connect`, `reconnect`, `disconnect`, `status`, `customers/import`).
-- `CustomerMirror` model and persisted mirror import logic are not implemented.
+- `packages/adapter-cipp` is present after GST-23 merge.
+- CIPP credential lifecycle endpoints are implemented in `apps/api/src/functions/cippIntegration.ts` (`validate`, `connect`, `reconnect`, `disconnect`, `status`, `customers/import`, `customers`).
+- `CustomerMirror` import and idempotent reconciliation are backed by the GST-23 CIPP sync store.
+- Admin setup surface is available at `/integrations/cipp`.
 - Health/source routes exist for API and AGPL compliance; `executeAction` and suspend action route are now present.
 
 ## What is present (and can be reused)
@@ -16,28 +17,28 @@
 
 ## Immediate blockers to ship GST-14
 
-1. Missing `packages/adapter-cipp` package and adapter contract surface.
-2. Missing integration state storage and persistence primitives (`CIPPIntegrationState`, `CustomerMirror`).
-3. Missing backend routes for connect/validate/reconnect/disconnect/import/status.
-4. No explicit required-scope validation flow (no source of truth for required scopes + no scope probe endpoint usage).
+No first-class implementation blocker remains in this branch.
 
-## Unblocker decision required
+Remaining release gates are normal PR review and CI:
+1. CTO review.
+2. QA Engineer review.
+3. Green CI.
 
-- Owner: CTO + Staff Engineer
-- Action required: deliver a dedicated GST-14 implementation branch/PR with the missing artifacts above before QA/Release can complete validation.
+## Release handoff
 
-## Recommended first implementation slice (once unblocked)
+- Owner: Release Engineer
+- Action required: keep the dedicated GST-14 branch scoped, verify focused API/web checks, and open the release PR for CTO + QA review.
 
-- Add `packages/adapter-cipp` with:
-  - health/capabilities probe
-  - scope verification helper
-  - deterministic customer list fetch + mapping keys
-- Add `apps/api` integration endpoints and persistence adapters backed by existing Azure Storage table pattern.
-- Add integration health aggregator and connect/reconnect mapping-preservation logic.
+## Implemented slice
+
+- Uses `packages/adapter-cipp` customer listing as the required connectivity/scope probe.
+- Adds `apps/api` integration endpoints with server-side credential-reference resolution.
+- Stores only `secretRef` in integration state; API token bytes stay in runtime secrets.
+- Uses existing `CustomerMirror` reconciliation so imports are idempotent and reconnect preserves mappings.
 
 ## Acceptance precondition
 
-Proceed only when API route + adapter changes are available in-code; this issue remains `blocked` until then.
+API route + adapter changes are now available in-code; proceed through review and CI.
 
 ## Blocker normalization update (2026-05-28)
 
@@ -49,4 +50,4 @@ Proceed only when API route + adapter changes are available in-code; this issue 
 
 - Dependency liveness was explicitly repaired in issue thread governance.
 - Active first-class blocker remains: `GST-23`.
-- Release Engineering re-activates only when GST-23 review/merge clears and a shippable branch/PR is available.
+- GST-23 review/merge has cleared; Release Engineering re-activated on the GST-14 branch.
