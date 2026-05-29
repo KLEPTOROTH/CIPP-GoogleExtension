@@ -1,0 +1,89 @@
+name: deploy-cloudflare-pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-cloudflare-pages.yml'
+      - 'apps/web/**'
+      - 'packages/core/**'
+      - 'packages/eslint-config-cipp-google/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - 'tsconfig.base.json'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-cloudflare-pages-demo-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-demo:
+    name: deploy cipp-google-extension-demo
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Cloudflare credentials are configured
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Missing CLOUDFLARE_API_TOKEN secret"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Missing CLOUDFLARE_ACCOUNT_ID secret"; exit 1; }
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve source tag
+        id: source
+        run: |
+          tag=$(git tag --points-at HEAD | sort -V | tail -n 1)
+          if [ -z "$tag" ]; then
+            tag="untagged"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Build static web export
+        env:
+          SOURCE_COMMIT_SHA: ${{ github.sha }}
+          SOURCE_TAG: ${{ steps.source.outputs.tag }}
+          SOURCE_REPO_URL: https://github.com/KLEPTOROTH/CIPP-GoogleExtension
+          SOURCE_LICENSE: AGPL-3.0
+        run: |
+          pnpm --filter @cipp-google/core build
+          pnpm --filter @cipp-google/web build
+          test -f apps/web/out/index.html
+          test -f apps/web/out/source.html
+          test -f apps/web/out/license.html
+          test -f apps/web/out/customers/acme/users.html
+          test -f apps/web/out/customers/acme/users/user-001.html
+
+      - name: Deploy direct upload to production branch
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy apps/web/out --project-name=cipp-google-extension-demo --branch=gst-68-demo

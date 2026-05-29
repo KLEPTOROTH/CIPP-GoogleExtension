@@ -4,13 +4,14 @@ CIPP Google Extension is AGPL-3.0. §13 requires that any user interacting with 
 
 ## Surfaces
 
-| Surface | What it does | Owner |
-|---|---|---|
-| `LICENSE` | Full AGPL-3.0 text. | Bootstrap ([GST-3](/GST/issues/GST-3)). |
-| `NOTICE` | Upstream attribution + license summary. | Bootstrap ([GST-3](/GST/issues/GST-3)). |
-| `GET /api/source` | JSON manifest of the running build (`commitSha`, `tag`, `repoUrl`, `license`). Anonymous, cacheable for 60s. | Release Engineer. |
-| Web footer (every page in `apps/web/`) | Human-readable "Source: GitHub @ `<tag>`" link, derived from `/api/source`. | Release Engineer (contract) + scaffolding owner ([GST-5](/GST/issues/GST-5)) (render). |
-| Public repo | Browsable code at the same tag/SHA the running build identifies. | CEO/board (visibility flip), Release Engineer (tag accuracy). |
+| Surface                                | What it does                                                                                                             | Owner                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `LICENSE`                              | Full AGPL-3.0 text.                                                                                                      | Bootstrap ([GST-3](/GST/issues/GST-3)).                                                |
+| `NOTICE`                               | Upstream attribution + license summary.                                                                                  | Bootstrap ([GST-3](/GST/issues/GST-3)).                                                |
+| `GET /api/source`                      | API-hosted JSON manifest of the running build (`commitSha`, `tag`, `repoUrl`, `license`). Anonymous, cacheable for 60s.  | Release Engineer.                                                                      |
+| Cloudflare Pages `/source`             | Static source page rendered from build-time `SOURCE_*` values because Pages export has no runtime API routes.            | Release Engineer.                                                                      |
+| Web footer (every page in `apps/web/`) | Human-readable "Source: GitHub @ `<tag>`" link, derived from the same source manifest values as the current host target. | Release Engineer (contract) + scaffolding owner ([GST-5](/GST/issues/GST-5)) (render). |
+| Public repo                            | Browsable code at the same tag/SHA the running build identifies.                                                         | CEO/board (visibility flip), Release Engineer (tag accuracy).                          |
 
 ## Contract — `GET /api/source`
 
@@ -21,15 +22,16 @@ GET /api/source HTTP/1.1
 ```json
 {
   "commitSha": "string  — full 40-char Git SHA of the running build",
-  "tag":       "string  — most recent annotated tag, or 'untagged'",
-  "repoUrl":   "string  — canonical repo URL on GitHub",
-  "license":   "string  — SPDX identifier, currently 'AGPL-3.0'"
+  "tag": "string  — most recent annotated tag, or 'untagged'",
+  "repoUrl": "string  — canonical repo URL on GitHub",
+  "license": "string  — SPDX identifier, currently 'AGPL-3.0'"
 }
 ```
 
 - `commitSha` MUST identify a commit reachable from the canonical repo's default branch (`main`).
-- `tag` SHOULD point to a tag that contains `commitSha`. When the build was made off an untagged commit, `tag` is `untagged`.
+- `tag` SHOULD point to a tag that exactly matches `commitSha`. When the build was made off an untagged commit, `tag` is `untagged`.
 - The endpoint MUST be reachable without authentication. §13 entitled users may not have credentials.
+- Static export targets such as Cloudflare Pages do not ship Next API routes. For those targets, `/source` MUST render the same manifest from build-time `SOURCE_COMMIT_SHA`, `SOURCE_TAG`, `SOURCE_REPO_URL`, and `SOURCE_LICENSE`.
 
 ### Trip-wires
 

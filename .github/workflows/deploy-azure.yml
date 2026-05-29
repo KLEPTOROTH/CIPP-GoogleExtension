@@ -18,19 +18,19 @@ name: deploy-azure
 on:
   pull_request:
     paths:
-      - "infra/**"
-      - "apps/api/**"
-      - ".github/workflows/deploy-azure.yml"
+      - 'infra/**'
+      - 'apps/api/**'
+      - '.github/workflows/deploy-azure.yml'
   push:
     branches: [main]
     paths:
-      - "infra/**"
-      - "apps/api/**"
-      - ".github/workflows/deploy-azure.yml"
+      - 'infra/**'
+      - 'apps/api/**'
+      - '.github/workflows/deploy-azure.yml'
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment to deploy"
+        description: 'Environment to deploy'
         required: true
         type: choice
         options: [dev, prod]
@@ -112,7 +112,10 @@ jobs:
       # Website Contributor on the Function App (granted by Bicep).
       - name: Stamp SOURCE_COMMIT_SHA + SOURCE_TAG
         run: |
-          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "untagged")
+          tag=$(git tag --points-at HEAD | sort -V | tail -n 1)
+          if [ -z "$tag" ]; then
+            tag="untagged"
+          fi
           az functionapp config appsettings set \
             -g ${{ vars.AZURE_DEV_RG }} \
             -n ${{ steps.outputs.outputs.function-app-name }} \
@@ -158,7 +161,10 @@ jobs:
       - name: Stamp SOURCE_COMMIT_SHA + SOURCE_TAG
         run: |
           name=$(jq -r '.properties.outputs.functionAppName.value' deploy.json)
-          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "untagged")
+          tag=$(git tag --points-at HEAD | sort -V | tail -n 1)
+          if [ -z "$tag" ]; then
+            tag="untagged"
+          fi
           az functionapp config appsettings set \
             -g ${{ vars.AZURE_PROD_RG }} \
             -n "$name" \

@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CORE_PACKAGE_NAME } from '@cipp-google/core';
-import { buildSourceManifest } from '../pages/api/source';
-import { buildSourceUrl } from '../pages/source';
+import { buildSourceManifest, buildSourceUrl } from '../src/sourceManifest';
 
 describe('web smoke', () => {
   it('links @cipp-google/core', () => {
@@ -42,6 +41,22 @@ describe('web smoke', () => {
       tag: 'v0.1.0',
       repoUrl: 'https://example.invalid/repo',
       license: 'AGPL-3.0-only',
+    });
+  });
+
+  it('falls back for empty source manifest env values', () => {
+    expect(
+      buildSourceManifest({
+        SOURCE_COMMIT_SHA: '',
+        SOURCE_TAG: '',
+        SOURCE_REPO_URL: '',
+        SOURCE_LICENSE: '',
+      }),
+    ).toEqual({
+      commitSha: 'unknown',
+      tag: 'unknown',
+      repoUrl: 'https://github.com/KLEPTOROTH/CIPP-GoogleExtension',
+      license: 'AGPL-3.0',
     });
   });
 });
