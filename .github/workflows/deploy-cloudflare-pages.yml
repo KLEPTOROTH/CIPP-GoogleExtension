@@ -82,8 +82,10 @@ jobs:
           test -f apps/web/out/customers/acme/users/user-001.html
 
       - name: Deploy direct upload to production branch
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/web/out --project-name=cipp-google-extension-demo --branch=gst-68-demo
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm dlx wrangler@3.90.0 pages deploy apps/web/out \
+            --project-name=cipp-google-extension-demo \
+            --branch=gst-68-demo
