@@ -139,6 +139,26 @@ describe('cipp webhook idempotency + reconcile healing', () => {
     expect((await store.getCustomer('cust-heal'))?.displayName).toBe('Recovered Customer');
   });
 
+  it('reconciles field changes when the source version is unchanged', async () => {
+    const store = new InMemoryCippSyncStore();
+    const baseRow = {
+      customerId: 'cust-rename',
+      cippTenantId: 'tenant-rename',
+      sourceVersion: 0,
+      lastObservedAt: '2026-05-29T00:00:00.000Z',
+      bindingState: 'bound' as const,
+    };
+
+    const first = await store.reconcileFromSnapshot([{ ...baseRow, displayName: 'Old Name' }]);
+    const second = await store.reconcileFromSnapshot([{ ...baseRow, displayName: 'New Name' }]);
+    const noop = await store.reconcileFromSnapshot([{ ...baseRow, displayName: 'New Name' }]);
+
+    expect(first.repaired).toBe(1);
+    expect(second.repaired).toBe(1);
+    expect(noop.repaired).toBe(0);
+    expect((await store.getCustomer('cust-rename'))?.displayName).toBe('New Name');
+  });
+
   it('marks local-only mirror rows as unbound during reconcile delete drift healing', async () => {
     const store = new InMemoryCippSyncStore();
     await store.applyWebhookEvent({
