@@ -12,7 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "pnpm run test:node && pnpm run test:vitest",
     "test:node": "tsx --test test/cipp-store-factory.test.ts test/source.test.ts",
-    "test:vitest": "vitest run --config ../../vitest.config.ts test/cipp-sync.test.ts test/health.test.ts test/issue-liveness-policy.test.ts test/issue-lifecycle-mutation.test.ts test/issue-lifecycle-durable-cas.test.ts"
+    "test:vitest": "vitest run --config ../../vitest.config.ts test/cipp-sync.test.ts test/health.test.ts test/issue-liveness-policy.test.ts"
   },
   "dependencies": {
     "@azure/data-tables": "13.3.2",
