@@ -1,14 +1,12 @@
-import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, describe, it } from 'node:test';
 
 import { TableClient } from '@azure/data-tables';
 
 import { createCippSyncStore, InMemoryCippSyncStore } from '../src/cipp/store.js';
 
 describe('createCippSyncStore durable fallback policy', () => {
-  let originalFromConnectionString: typeof TableClient.fromConnectionString;
-
-  originalFromConnectionString = TableClient.fromConnectionString;
+  const originalFromConnectionString = TableClient.fromConnectionString;
 
   afterEach(() => {
     TableClient.fromConnectionString = originalFromConnectionString;
