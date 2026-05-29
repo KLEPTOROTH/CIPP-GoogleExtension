@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import type { GetStaticPaths, GetStaticProps } from 'next';
 import { Box, Card, CardContent, Divider, Stack, Typography } from '@mui/material';
 
 import {
+  getCustomers,
+  getMergedUsers,
   getOverallStatus,
   getUser,
   performUnifiedAction,
@@ -16,11 +19,30 @@ import SuspensionStatus from '@/components/SuspensionStatus';
 import UnifiedSuspendButton from '@/components/UnifiedSuspendButton';
 import TypedErrorBanner from '@/components/TypedErrorBanner';
 
-export default function CustomerUserPage() {
+interface CustomerUserPageProps {
+  customerId: string;
+  userKey: string;
+}
+
+export const getStaticPaths: GetStaticPaths = () => ({
+  paths: getCustomers().flatMap((customer) =>
+    getMergedUsers(customer.id).map((user) => ({
+      params: { id: customer.id, key: user.key },
+    })),
+  ),
+  fallback: false,
+});
+
+export const getStaticProps: GetStaticProps<CustomerUserPageProps> = ({ params }) => ({
+  props: {
+    customerId: String(params?.id ?? ''),
+    userKey: String(params?.key ?? ''),
+  },
+});
+
+export default function CustomerUserPage({ customerId, userKey }: CustomerUserPageProps) {
   const router = useRouter();
   const isReady = router.isReady;
-  const customerId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
-  const userKey = Array.isArray(router.query.key) ? router.query.key[0] : router.query.key;
 
   const [status, setStatus] = useState<ActionOutcome>('success-both');
   const [cachedUser, setCachedUser] = useState<MergedUserRow | undefined>(undefined);

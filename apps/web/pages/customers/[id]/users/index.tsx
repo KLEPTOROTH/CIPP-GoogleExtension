@@ -1,5 +1,5 @@
-import { useRouter } from 'next/router';
 import Link from 'next/link';
+import type { GetStaticPaths, GetStaticProps } from 'next';
 import {
   Box,
   Chip,
@@ -13,8 +13,17 @@ import {
   Typography,
 } from '@mui/material';
 
-import { getMergedUsers, getOverallStatus, type MergedUserRow } from '@/data/gst12Fixtures';
+import {
+  getCustomers,
+  getMergedUsers,
+  getOverallStatus,
+  type MergedUserRow,
+} from '@/data/gst12Fixtures';
 import SuspensionStatus from '@/components/SuspensionStatus';
+
+interface CustomerUsersPageProps {
+  customerId: string;
+}
 
 function badgeLabelFor(row: MergedUserRow): string | null {
   if (row.unmatchedOnGoogle && row.unmatchedOnM365) {
@@ -29,11 +38,21 @@ function badgeLabelFor(row: MergedUserRow): string | null {
   return null;
 }
 
-export default function CustomerUsersPage() {
-  const router = useRouter();
-  const customerId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
+export const getStaticPaths: GetStaticPaths = () => ({
+  paths: getCustomers().map((customer) => ({
+    params: { id: customer.id },
+  })),
+  fallback: false,
+});
 
-  const rows = customerId ? getMergedUsers(customerId) : [];
+export const getStaticProps: GetStaticProps<CustomerUsersPageProps> = ({ params }) => ({
+  props: {
+    customerId: String(params?.id ?? ''),
+  },
+});
+
+export default function CustomerUsersPage({ customerId }: CustomerUsersPageProps) {
+  const rows = getMergedUsers(customerId);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -41,7 +60,7 @@ export default function CustomerUsersPage() {
         Customer users
       </Typography>
       <Typography variant="subtitle1" sx={{ mb: 2 }}>
-        Customer: {customerId ?? 'unknown'}
+        Customer: {customerId}
       </Typography>
       <TableContainer component={Paper} sx={{ maxWidth: 1100 }}>
         <Table>
