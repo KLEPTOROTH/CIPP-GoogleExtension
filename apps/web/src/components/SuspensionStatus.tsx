@@ -24,10 +24,12 @@ const chipColorForStatus = (
 };
 
 export default function SuspensionStatus({ status, onRetryGoogle, onRetryM365 }: Props) {
+  const canRetry = status === 'Inconsistent' || status === 'Unknown';
+
   return (
     <Stack spacing={1} alignItems="flex-start">
       <Chip label={status} color={chipColorForStatus(status)} />
-      {status === 'Inconsistent' ? (
+      {canRetry ? (
         <Stack direction="row" spacing={1}>
           {onRetryGoogle ? (
             <Button
