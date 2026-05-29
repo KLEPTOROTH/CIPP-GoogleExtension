@@ -39,8 +39,8 @@ jobs:
       - name: Install Chromium browser
         run: pnpm --filter @cipp-google/web exec playwright install --with-deps chromium
 
-      - name: Build web app
-        run: pnpm --filter @cipp-google/web build
+      - name: Build web app and workspace deps
+        run: pnpm --filter @cipp-google/web... build
 
       - name: Start web app
         run: |

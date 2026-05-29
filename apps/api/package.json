@@ -10,11 +10,12 @@
     "start": "func start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "vitest run --config ../../vitest.config.ts"
   },
   "dependencies": {
     "@azure/data-tables": "13.3.2",
     "@azure/functions": "4.5.1",
+    "@cipp-google/adapter-cipp": "workspace:*",
     "@cipp-google/core": "workspace:*"
   },
   "devDependencies": {
