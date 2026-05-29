@@ -44,6 +44,9 @@ importers:
       '@cipp-google/adapter-cipp':
         specifier: workspace:*
         version: link:../../packages/adapter-cipp
+      '@cipp-google/audit':
+        specifier: workspace:*
+        version: link:../../packages/audit
       '@cipp-google/core':
         specifier: workspace:*
         version: link:../../packages/core
