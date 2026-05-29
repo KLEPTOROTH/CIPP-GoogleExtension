@@ -32,9 +32,14 @@ export default function HomePage() {
               </Link>
             </ListItem>
             <ListItem>
-              <Link href="/source">
-                <Button>Source code</Button>
-              </Link>
+              <Button
+                component="a"
+                href="https://github.com/KLEPTOROTH/CIPP-GoogleExtension"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Source code
+              </Button>
             </ListItem>
             <ListItem>
               <Link href="/license">

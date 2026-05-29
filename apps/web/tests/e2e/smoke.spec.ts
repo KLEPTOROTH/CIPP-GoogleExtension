@@ -12,7 +12,10 @@ test('home page links to phase-1 routes', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'CIPP integration' })).toBeVisible();
   const sourceLink = page.getByRole('link', { name: 'Source code' });
   await expect(sourceLink).toBeVisible();
-  await expect(sourceLink).toHaveAttribute('href', '/source');
+  await expect(sourceLink).toHaveAttribute(
+    'href',
+    'https://github.com/KLEPTOROTH/CIPP-GoogleExtension',
+  );
 
   const licenseLink = page.getByRole('link', { name: 'License' });
   await expect(licenseLink).toBeVisible();
