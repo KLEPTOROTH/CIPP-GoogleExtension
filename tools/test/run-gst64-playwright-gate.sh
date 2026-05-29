@@ -35,4 +35,4 @@ if ! curl -fsS "${PLAYWRIGHT_BASE_URL}" >/dev/null; then
 fi
 
 echo "Running GST-64 Playwright smoke gate..."
-pnpm --filter @cipp-google/web exec playwright test --config apps/web/playwright.config.ts -- tests/e2e/smoke.spec.ts
+pnpm --filter @cipp-google/web exec playwright test --config playwright.config.ts -- tests/e2e/smoke.spec.ts
