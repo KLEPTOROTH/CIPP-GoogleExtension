@@ -10,7 +10,12 @@
 // for the stamping step and `docs/agpl-source-availability.md` for
 // the contract.
 
-import { app, type HttpRequest, type InvocationContext, type HttpResponseInit } from '@azure/functions';
+import {
+  app,
+  type HttpRequest,
+  type HttpResponseInit,
+  type InvocationContext,
+} from '@azure/functions';
 
 export interface SourceManifest {
   commitSha: string;
@@ -28,7 +33,7 @@ export function buildSourceManifest(env: NodeJS.ProcessEnv = process.env): Sourc
   };
 }
 
-export async function sourceHandler(
+export async function source(
   _request: HttpRequest,
   _context: InvocationContext,
 ): Promise<HttpResponseInit> {
@@ -45,8 +50,8 @@ export async function sourceHandler(
 }
 
 app.http('source', {
-  route: 'source',
   methods: ['GET'],
   authLevel: 'anonymous', // §13 entitled users must be able to read it without our auth
-  handler: sourceHandler,
+  route: 'source',
+  handler: source,
 });

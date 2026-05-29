@@ -49,6 +49,7 @@ export interface ExecuteActionAudit {
   startedAt: string;
   finishedAt: string;
   status: ExecuteActionStatus;
+  error?: string;
   m365: ExecuteActionChannelResult;
   google: ExecuteActionChannelResult;
 }
@@ -69,7 +70,13 @@ export interface ExecuteActionResult {
 const defaultClock = (): string => new Date().toISOString();
 
 const normalizeProviderError = (error: unknown): ProviderError => {
-  if (error && typeof error === 'object' && 'code' in error && 'message' in error && 'statusCode' in error) {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    'message' in error &&
+    'statusCode' in error
+  ) {
     return error as ProviderError;
   }
   const message = error instanceof Error ? error.message : 'provider action threw unexpectedly';
@@ -86,7 +93,10 @@ async function safeProviderResult<T>(
   }
 }
 
-export function resolveActionChip(action: ExecuteActionName, status: ExecuteActionStatus): ActionChip {
+export function resolveActionChip(
+  action: ExecuteActionName,
+  status: ExecuteActionStatus,
+): ActionChip {
   if (status === 200) {
     return action === 'suspend' ? 'Suspended' : 'Active';
   }
@@ -104,6 +114,17 @@ function mapStatus(m365Verified: boolean, googleVerified: boolean): ExecuteActio
     return 207;
   }
   return 200;
+}
+
+function isPostStateValid(
+  action: ExecuteActionName,
+  after: ProviderResult<AuditEntry>,
+): boolean {
+  if (!after.ok) {
+    return false;
+  }
+
+  return action === 'suspend' ? after.value.after.suspended : !after.value.after.suspended;
 }
 
 export async function executeAction(input: ExecuteActionInput): Promise<ExecuteActionResult> {
@@ -133,8 +154,10 @@ export async function executeAction(input: ExecuteActionInput): Promise<ExecuteA
 
   const m365Applied = m365Mutation.ok;
   const googleApplied = googleMutation.ok;
-  const m365Verified = m365Applied && m365Before.ok && m365After.ok;
-  const googleVerified = googleApplied && googleBefore.ok && googleAfter.ok;
+  const m365Verified =
+    m365Applied && m365Before.ok && m365After.ok && isPostStateValid(action, m365After);
+  const googleVerified =
+    googleApplied && googleBefore.ok && googleAfter.ok && isPostStateValid(action, googleAfter);
   const providerStatus = mapStatus(m365Verified, googleVerified);
 
   const result: ExecuteActionResult = {
@@ -190,28 +213,8 @@ export async function executeAction(input: ExecuteActionInput): Promise<ExecuteA
       result.audit.status = 502;
     }
 
-    if (!result.m365.mutation.ok && !result.google.mutation.ok) {
-      return result;
-    }
-
     const message = error instanceof Error ? error.message : 'audit write failed';
-    const auditWriteError: ProviderResult<User> = {
-      ok: false,
-      error: new GenericProviderError(`audit_write_failed:${message}`),
-    };
-
-    if (result.m365.mutation.ok) {
-      result.m365.mutation = auditWriteError;
-      result.audit.m365.mutation = auditWriteError;
-    }
-    if (result.google.mutation.ok) {
-      result.google.mutation = auditWriteError;
-      result.audit.google.mutation = auditWriteError;
-    }
-
-    result.audit.m365Applied = result.m365.mutation.ok;
-    result.audit.googleApplied = result.google.mutation.ok;
-    result.audit.applied = result.audit.m365Applied || result.audit.googleApplied;
+    result.audit.error = `audit_write_failed:${message}`;
   }
 
   return result;

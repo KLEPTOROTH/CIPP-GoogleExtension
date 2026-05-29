@@ -45,14 +45,17 @@ Status: Ready for review handoff
 ## Review Routing
 
 1. Staff Engineer review
+
 - Confirm no contract drift across `core`, `adapter-mock`, `adapter-google`, and `adapter-m365` tests.
 - Confirm no production-path imports of test-conformance utilities.
 
 2. QA Engineer review
+
 - Validate contract matrix traces to acceptance criteria.
 - Verify fault-injection scenarios are represented in test reporting artifacts.
 
 3. Release Engineer
+
 - Gate merge on required checks and required reviewer approvals per repo policy.
 
 ## Disposition Recommendation

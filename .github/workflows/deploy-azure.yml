@@ -6,10 +6,14 @@ name: deploy-azure
 #   - Pushes to main deploy `dev`.
 #   - The `prod` deploy is environment-gated by GitHub (manual approve).
 #
+# Until the human subscription owner has provisioned the federated
+# identity and populated the GitHub Environment variables, every job
+# guards on `vars.AZURE_DEPLOY_CLIENT_ID != ''` and is skipped (green)
+# rather than failed. Bootstrap steps live in `docs/deploy.md`.
+#
 # No long-lived secrets: the workflow exchanges its OIDC token for a
 # federated credential on a user-assigned managed identity scoped to
-# the Azure resource group. See `infra/bicep/README.md` for the
-# one-time human setup.
+# the Azure resource group.
 
 on:
   pull_request:
@@ -128,7 +132,7 @@ jobs:
   # --------------------------------------------------------------------
   deploy-prod:
     name: deploy prod
-    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod'
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod' && vars.AZURE_DEPLOY_CLIENT_ID != ''
     runs-on: ubuntu-latest
     environment: prod # GitHub Environment with required reviewers configured
     steps:

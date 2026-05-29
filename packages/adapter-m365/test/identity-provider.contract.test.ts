@@ -81,7 +81,7 @@ function createMockGraphClient(fixtureData: GraphFixture) {
         const etag =
           headers instanceof Headers
             ? headers.get('If-None-Match')
-            : headers['If-None-Match'] ?? headers['if-none-match'];
+            : (headers['If-None-Match'] ?? headers['if-none-match']);
         if (count > 1 && etag) {
           return new Response(null, { status: 304, headers: { etag: 'W/"v1"' } });
         }

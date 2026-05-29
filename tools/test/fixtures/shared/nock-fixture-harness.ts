@@ -35,7 +35,10 @@ const normalizeInteraction = (interaction: Record<string, unknown>): Record<stri
   delete headers['Content-Type'];
   interaction.reqheaders = headers;
   if (typeof interaction.path === 'string') {
-    interaction.path = interaction.path.replace(/([?&])(access_token|token)=([^&]+)/gi, '$1$2=<redacted>');
+    interaction.path = interaction.path.replace(
+      /([?&])(access_token|token)=([^&]+)/gi,
+      '$1$2=<redacted>',
+    );
   }
   return interaction;
 };
@@ -131,7 +134,9 @@ export const withFixturePlayback = async <T>(options: FixtureHarnessOptions): Pr
   try {
     const result = (await options.action()) as T;
     if (!nock.isDone()) {
-      throw new Error(`fixture replay did not consume all entries from ${path.relative(process.cwd(), options.fixturePath)}`);
+      throw new Error(
+        `fixture replay did not consume all entries from ${path.relative(process.cwd(), options.fixturePath)}`,
+      );
     }
     return result;
   } finally {

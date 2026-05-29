@@ -14,30 +14,34 @@ export async function reconcileCustomers(_timer: Timer, context: InvocationConte
     return;
   }
 
-  const { CippAdapter } = await import('@cipp-google/adapter-cipp');
-  const adapter = new CippAdapter({ baseUrl, apiToken: token });
-  const reconciled = await runReconcile(
-    {
-      async listCustomerMirrorSnapshot(): Promise<readonly CustomerMirrorRecord[]> {
-        const customers = await adapter.listCustomers();
-        if (!customers.ok) {
-          return [];
-        }
+  try {
+    const { CippAdapter } = await import('@cipp-google/adapter-cipp');
+    const adapter = new CippAdapter({ baseUrl, apiToken: token });
+    const reconciled = await runReconcile(
+      {
+        async listCustomerMirrorSnapshot(): Promise<readonly CustomerMirrorRecord[]> {
+          const customers = await adapter.listCustomers();
+          if (!customers.ok) {
+            throw new Error(`adapter.listCustomers failed: ${customers.error.code}`);
+          }
 
-        return customers.value.map((customer) => ({
-          customerId: customer.id,
-          displayName: customer.name,
-          cippTenantId: customer.id,
-          sourceVersion: 0,
-          lastObservedAt: new Date().toISOString(),
-          bindingState: 'bound',
-        }));
+          return customers.value.map((customer) => ({
+            customerId: customer.id,
+            displayName: customer.name,
+            cippTenantId: customer.id,
+            sourceVersion: 0,
+            lastObservedAt: new Date().toISOString(),
+            bindingState: 'bound',
+          }));
+        },
       },
-    },
-    syncStore,
-  );
+      syncStore,
+    );
 
-  context.log(`reconcile finished: repaired=${reconciled.repaired}`);
+    context.log(`reconcile finished: repaired=${reconciled.repaired}`);
+  } catch (error) {
+    context.error('reconcile aborted: upstream snapshot fetch failed or adapter init failed', error);
+  }
 }
 
 app.timer('reconcileCustomers', {

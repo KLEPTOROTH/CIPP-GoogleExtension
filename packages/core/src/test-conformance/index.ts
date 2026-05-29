@@ -30,7 +30,9 @@ const assert = {
   },
   equal<T>(actual: T, expected: T): void {
     if (actual !== expected) {
-      throw new Error(`assert.equal failed: ${JSON.stringify(actual)} !== ${JSON.stringify(expected)}`);
+      throw new Error(
+        `assert.equal failed: ${JSON.stringify(actual)} !== ${JSON.stringify(expected)}`,
+      );
     }
   },
   ok(value: unknown, message = 'assert.ok failed'): void {
@@ -42,7 +44,9 @@ const assert = {
 
 function assertSuccess<T>(result: { ok: boolean; value?: T; error?: unknown }): T {
   if (!result.ok) {
-    throw new Error(`expected success result, got error ${(result as { error?: Error }).error?.message}`);
+    throw new Error(
+      `expected success result, got error ${(result as { error?: Error }).error?.message}`,
+    );
   }
   if (!result.value) {
     throw new Error('expected value in success result');

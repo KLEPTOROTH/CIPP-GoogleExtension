@@ -25,12 +25,12 @@
 
 ## Staff Engineer Sign-off Block
 
-- Reviewer: `Staff Engineer (ARC Solutions) — agent 45094b0d-0c5e-4ffe-b8d0-3ee264515338`
-- Date (UTC): `2026-05-28T19:04:01Z`
-- Decision: `approve`
+- Reviewer: `________________`
+- Date (UTC): `________________`
+- Decision: `approve` | `request_changes`
 - Notes:
-  - `Reviewed docs/test-strategy.md, vitest.config.ts, .github/workflows/ci.yml, and tools/test/fixtures/shared/nock-fixture-harness.ts against GST-7 scope; implementation matches the declared fixture and CI policy.`
-  - `Validated replay and structural closure evidence with targeted execution: fixture scripts passed; filtered turbo test suites covering adapter-cipp/api/adapter-google/adapter-m365/adapter-mock passed; no remaining production-structural blockers from GST-31 closure set were found in GST-7 scope.`
+  - `____________________________________________________________`
+  - `____________________________________________________________`
 
 ## Transition Rule
 

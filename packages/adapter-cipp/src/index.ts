@@ -63,8 +63,9 @@ export class CippAdapter implements IdentityProvider, CustomerReader {
   }
 
   async getUser(customer: Customer, key: string): Promise<ProviderResult<User>> {
-    return this.request(`/customers/${encodeURIComponent(customer.id)}/users/${encodeURIComponent(key)}`, (body: unknown) =>
-      mapUser(body, customer.id),
+    return this.request(
+      `/customers/${encodeURIComponent(customer.id)}/users/${encodeURIComponent(key)}`,
+      (body: unknown) => mapUser(body, customer.id),
     );
   }
 
@@ -224,5 +225,10 @@ function isIsoDateString(value: unknown): value is string {
 }
 
 function isAbortError(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'name' in error && (error as { name?: string }).name === 'AbortError';
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    (error as { name?: string }).name === 'AbortError'
+  );
 }

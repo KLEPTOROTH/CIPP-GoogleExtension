@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'apps/web/**'
+      - 'packages/core/**'
+      - 'tools/test/**'
       - '.github/workflows/gst64-playwright-gate.yml'
       - 'package.json'
       - 'pnpm-lock.yaml'
@@ -17,6 +19,9 @@ jobs:
     name: GST-64 Chromium smoke gate
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+      PLAYWRIGHT_INSTALL_WITH_DEPS: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,76 +41,97 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Chromium browser
-        run: pnpm --filter @cipp-google/web exec playwright install --with-deps chromium
-
-      - name: Build web app
-        run: pnpm --filter @cipp-google/web build
-
-      - name: Start web app
-        run: |
-          PORT=3100 pnpm --filter @cipp-google/web start > /tmp/gst64-web.log 2>&1 &
-          echo $! > /tmp/gst64-web.pid
-          for _ in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:3100 >/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "::error::web app did not become ready on 127.0.0.1:3100"
-          cat /tmp/gst64-web.log || true
-          exit 1
+      - name: Restore Playwright browser cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-chromium-${{ runner.os }}-
 
       - name: Run GST-64 smoke gate
         env:
           PLAYWRIGHT_NO_WEBSERVER: '1'
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3100
-        run: pnpm --filter @cipp-google/web exec playwright test --config playwright.config.ts -- tests/e2e/smoke.spec.ts
+        run: bash tools/test/run-gst64-playwright-gate.sh
+
+      - name: Prepare Playwright evidence bundle
+        if: always()
+        run: |
+          set -euo pipefail
+
+          evidence_root=/tmp/gst64-playwright-evidence
+          bundle=/tmp/gst64-playwright-evidence.tar.gz
+          manifest=/tmp/gst64-playwright-evidence-manifest.txt
+          checksum=/tmp/gst64-playwright-evidence.sha256
+
+          rm -rf "$evidence_root"
+          mkdir -p "$evidence_root"
+
+          if [ -d apps/web/playwright-report ]; then
+            mkdir -p "$evidence_root/apps/web"
+            cp -a apps/web/playwright-report "$evidence_root/apps/web/playwright-report"
+          fi
+
+          if [ -d apps/web/test-results ]; then
+            mkdir -p "$evidence_root/apps/web"
+            cp -a apps/web/test-results "$evidence_root/apps/web/test-results"
+          fi
+
+          if [ -f /tmp/gst64-web.log ]; then
+            cp /tmp/gst64-web.log "$evidence_root/gst64-web.log"
+          fi
+
+          find "$evidence_root" -type f | sort > "$manifest"
+          tar -czf "$bundle" -C /tmp "$(basename "$evidence_root")"
+          sha256sum "$bundle" > "$checksum"
+
+          {
+            echo "## GST-64 Playwright Evidence"
+            echo
+            echo "- Bundle: \`$bundle\`"
+            echo "- SHA256: \`$(cut -d' ' -f1 "$checksum")\`"
+            echo "- Size: \`$(wc -c < "$bundle") bytes\`"
+            echo
+            echo "### Evidence Files"
+            echo '```text'
+            sed "s#^$evidence_root/#/#" "$manifest"
+            echo '```'
+            echo
+            echo "### Web Log Tail"
+            echo '```text'
+            if [ -f /tmp/gst64-web.log ]; then
+              tail -n 120 /tmp/gst64-web.log
+            else
+              echo "No /tmp/gst64-web.log file was produced."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$(wc -c < "$bundle")" -le 900000 ]; then
+            echo "GST64_EVIDENCE_BUNDLE_BASE64_BEGIN"
+            base64 "$bundle"
+            echo "GST64_EVIDENCE_BUNDLE_BASE64_END"
+          else
+            echo "GST-64 evidence bundle is larger than the inline log fallback limit."
+            echo "Bundle path: $bundle"
+            cat "$checksum"
+          fi
 
       - name: Upload Playwright artifacts
-        id: upload_artifacts
         if: always()
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: gst64-playwright-artifacts
           path: |
+            /tmp/gst64-playwright-evidence.tar.gz
+            /tmp/gst64-playwright-evidence.sha256
+            /tmp/gst64-playwright-evidence-manifest.txt
             apps/web/playwright-report
             apps/web/test-results
             /tmp/gst64-web.log
           if-no-files-found: ignore
-          retention-days: 14
-
-      - name: Emit Playwright artifact fallback
-        if: always() && steps.upload_artifacts.outcome == 'failure'
-        run: |
-          evidence_paths=()
-          [ -d apps/web/playwright-report ] && evidence_paths+=("apps/web/playwright-report")
-          [ -d apps/web/test-results ] && evidence_paths+=("apps/web/test-results")
-          [ -f /tmp/gst64-web.log ] && evidence_paths+=("/tmp/gst64-web.log")
-
-          if [ "${#evidence_paths[@]}" -eq 0 ]; then
-            echo "No GST-64 evidence paths were present for fallback capture."
-            exit 0
-          fi
-
-          tar -czf /tmp/gst64-playwright-artifacts.tgz "${evidence_paths[@]}"
-          {
-            echo "## GST-64 Playwright artifact fallback"
-            echo
-            echo "Artifact upload failed, so this run emitted a base64 tarball in the job log."
-            echo
-            echo "Recover with:"
-            echo
-            echo '```bash'
-            echo "awk '/Z GST64_ARTIFACT_TGZ_BASE64_BEGIN\$/{capture=1;next}/Z GST64_ARTIFACT_TGZ_BASE64_END\$/{capture=0} capture { sub(/^.*Z /, \"\"); print }' job.log | base64 -d > gst64-playwright-artifacts.tgz"
-            echo "tar -xzf gst64-playwright-artifacts.tgz"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          echo "GST64_ARTIFACT_TGZ_BASE64_BEGIN"
-          base64 /tmp/gst64-playwright-artifacts.tgz
-          echo "GST64_ARTIFACT_TGZ_BASE64_END"
 
       - name: Stop web app
         if: always()

@@ -2,7 +2,13 @@ import { TableClient } from '@azure/data-tables';
 import { BlobServiceClient } from '@azure/storage-blob';
 import type { ExecuteActionAudit } from '@cipp-google/core';
 
-import type { AuditFilter, AuditPage, AuditRecord, AuditRecordIndex, AuditStore } from './models.js';
+import type {
+  AuditFilter,
+  AuditPage,
+  AuditRecord,
+  AuditRecordIndex,
+  AuditStore,
+} from './models.js';
 
 interface CursorState {
   nextOffset: number;
@@ -32,7 +38,9 @@ export interface AzureAuditStoreConfig {
 }
 
 function encodeCursor(nextOffset: number): string {
-  return Buffer.from(JSON.stringify({ nextOffset } satisfies CursorState), 'utf8').toString('base64');
+  return Buffer.from(JSON.stringify({ nextOffset } satisfies CursorState), 'utf8').toString(
+    'base64',
+  );
 }
 
 function decodeCursor(rawCursor?: string): number {
@@ -234,7 +242,8 @@ function isBlobAlreadyExistsError(error: unknown): boolean {
     return false;
   }
   const knownCode = 'code' in error ? (error as { code?: string }).code : undefined;
-  const statusCode = 'statusCode' in error ? (error as { statusCode?: number }).statusCode : undefined;
+  const statusCode =
+    'statusCode' in error ? (error as { statusCode?: number }).statusCode : undefined;
   return knownCode === 'BlobAlreadyExists' || statusCode === 412;
 }
 

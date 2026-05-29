@@ -33,7 +33,17 @@ export function processWebhookEvent(input: WebhookProcessInput): WebhookProcessR
     return { accepted: false, reason: 'invalid_payload' };
   }
 
-  if (!event.eventId || !event.customerId || !event.cippTenantId || !event.eventTime || !event.eventType) {
+  if (
+    typeof event.eventId !== 'string' ||
+    typeof event.customerId !== 'string' ||
+    typeof event.cippTenantId !== 'string' ||
+    typeof event.eventTime !== 'string' ||
+    typeof event.eventType !== 'string' ||
+    event.eventId.length === 0 ||
+    event.customerId.length === 0 ||
+    event.cippTenantId.length === 0 ||
+    event.eventTime.length === 0
+  ) {
     return { accepted: false, reason: 'invalid_payload' };
   }
 
@@ -45,7 +55,10 @@ export function processWebhookEvent(input: WebhookProcessInput): WebhookProcessR
     return { accepted: false, reason: 'invalid_payload' };
   }
 
-  if (event.sourceVersion !== undefined && (!Number.isFinite(event.sourceVersion) || event.sourceVersion < 0)) {
+  if (
+    event.sourceVersion !== undefined &&
+    (!Number.isFinite(event.sourceVersion) || event.sourceVersion < 0)
+  ) {
     return { accepted: false, reason: 'invalid_payload' };
   }
 

@@ -2,13 +2,13 @@ name: sandbox-tenant-ci
 
 on:
   schedule:
-    - cron: "0 2 * * *"
+    - cron: '0 2 * * *'
   push:
     branches: [main]
   workflow_dispatch:
     inputs:
       run_real_tenant:
-        description: "Force real-tenant steps even if this looks like a dry run"
+        description: 'Force real-tenant steps even if this looks like a dry run'
         required: false
         default: false
         type: boolean

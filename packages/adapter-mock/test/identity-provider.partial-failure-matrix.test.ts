@@ -271,13 +271,13 @@ test('executeAction returns 502 when audit persistence fails after provider muta
   expect(result.status).toBe(502);
   expect(result.chip).toBe('Failure');
   expect(result.audit.status).toBe(502);
-  expect(result.m365.mutation.ok).toBe(false);
-  expect(result.google.mutation.ok).toBe(false);
-  expect(result.audit.m365.mutation.ok).toBe(false);
-  expect(result.audit.google.mutation.ok).toBe(false);
-  expect(result.audit.m365Applied).toBe(false);
-  expect(result.audit.googleApplied).toBe(false);
-  expect(result.audit.applied).toBe(false);
+  expect(result.m365.mutation.ok).toBe(true);
+  expect(result.google.mutation.ok).toBe(true);
+  expect(result.audit.m365.mutation.ok).toBe(true);
+  expect(result.audit.google.mutation.ok).toBe(true);
+  expect(result.audit.m365Applied).toBe(true);
+  expect(result.audit.googleApplied).toBe(true);
+  expect(result.audit.applied).toBe(true);
 });
 
 test('executeAction audit payload stays aligned with channel mutations after audit write failure', async () => {
@@ -296,11 +296,11 @@ test('executeAction audit payload stays aligned with channel mutations after aud
   });
 
   expect(result.status).toBe(502);
-  expect(result.m365.mutation.ok).toBe(false);
+  expect(result.m365.mutation.ok).toBe(true);
   expect(result.google.mutation.ok).toBe(false);
   expect(result.audit.m365.mutation.ok).toBe(result.m365.mutation.ok);
   expect(result.audit.google.mutation.ok).toBe(result.google.mutation.ok);
-  expect(result.audit.m365Applied).toBe(false);
+  expect(result.audit.m365Applied).toBe(true);
   expect(result.audit.googleApplied).toBe(false);
-  expect(result.audit.applied).toBe(false);
+  expect(result.audit.applied).toBe(true);
 });

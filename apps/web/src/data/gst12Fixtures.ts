@@ -2,7 +2,10 @@ export type BindingState = 'bound' | 'unbound' | 'unknown';
 export type SuspensionState = 'Active' | 'Suspended' | 'Inconsistent' | 'Unknown';
 export type ActionVerb = 'suspend' | 'resume';
 export type ActionOutcome = 'success-both' | 'partial' | 'failure-both';
-export type ActionErrorCode = 'USER_NOT_FOUND' | 'INVALID_USER_STATE' | 'INCONSISTENT_RETRY_REQUIRED';
+export type ActionErrorCode =
+  | 'USER_NOT_FOUND'
+  | 'INVALID_USER_STATE'
+  | 'INCONSISTENT_RETRY_REQUIRED';
 
 export interface ActionFailure {
   code: ActionErrorCode;
@@ -152,8 +155,18 @@ const auditSeed: UserAuditRow[] = [
   },
 ];
 
-const users = new Map<string, MergedUserRow>(userSeeds.map((user) => [`${user.customerId}::${user.key}`, { ...user }]));
+const users = new Map<string, MergedUserRow>(
+  userSeeds.map((user) => [`${user.customerId}::${user.key}`, { ...user }]),
+);
 const auditLog: UserAuditRow[] = [...auditSeed];
+
+export function resetGst12Fixtures(): void {
+  users.clear();
+  for (const user of userSeeds) {
+    users.set(key(user.customerId, user.key), { ...user });
+  }
+  auditLog.splice(0, auditLog.length, ...auditSeed);
+}
 
 function clone<T>(value: T): T {
   return structuredClone(value);
@@ -224,7 +237,12 @@ export function getUser(customerId: string, userKey: string): MergedUserRow | un
   return clone(row);
 }
 
-export function performUnifiedAction(customerId: string, userKey: string, action: ActionVerb, actor = 'operator'): ActionResult {
+export function performUnifiedAction(
+  customerId: string,
+  userKey: string,
+  action: ActionVerb,
+  actor = 'operator',
+): ActionResult {
   const rowKey = key(customerId, userKey);
   const row = users.get(rowKey);
 
@@ -317,7 +335,12 @@ export function performUnifiedAction(customerId: string, userKey: string, action
   };
 }
 
-export function retryUserSide(customerId: string, userKey: string, side: ActionSide['actor'], actor = 'operator'): ActionResult {
+export function retryUserSide(
+  customerId: string,
+  userKey: string,
+  side: ActionSide['actor'],
+  actor = 'operator',
+): ActionResult {
   const rowKey = key(customerId, userKey);
   const row = users.get(rowKey);
   if (!row) {

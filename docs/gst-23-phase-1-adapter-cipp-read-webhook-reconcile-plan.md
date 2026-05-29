@@ -3,12 +3,6 @@
 Status: Blocked until branch/worktree is switched to GST-23 implementation base.
 Source: Parent plan `GST-4`
 
-## Implementation target (locked 2026-05-28)
-
-- Branch: `origin/gst-23-implementation-target`
-- Target commit: `00f493ead66496e85e48ae553ae3243cf3fe07f6`
-- Intent: this branch/commit is the canonical GST-23 implementation and review target.
-
 ## 1) Objective and guardrail
 
 Build customer-mirror ingestion from CIPP with two independent data paths:
@@ -19,13 +13,14 @@ Build customer-mirror ingestion from CIPP with two independent data paths:
 The reconciliation loop is the source of truth for durability and recovery.
 
 Primary compatibility rule:
+
 - All read/list results are surfaced through `IdentityProvider`-compatible result types and shared typed errors from `packages/core`.
 
 ## 2) Hard blocker (unblock required before code changes)
 
 - Current checkout is on `chore/gst-18-branch-protection` (checked from `.git/HEAD`).
-- GST-23 work must be executed against `origin/gst-23-implementation-target` at `00f493ead66496e85e48ae553ae3243cf3fe07f6`, not on GST-18 branch-protection scope.
-- Unblock action: maintainer must switch this worktree to the GST-23 target branch/commit before implementation updates are landed.
+- Phase-1 `packages/adapter-cipp`, webhook handlers, and scheduled reconcile surfaces are absent on this branch.
+- Unblock action: maintainer must switch this worktree to the GST-23 patch base before implementation can be landed.
 
 ## 3) Architecture and component boundaries
 
@@ -52,6 +47,7 @@ CIPP REST + webhook verifier]
 ```
 
 Trust boundaries:
+
 - Browser -> API: untrusted user input and request headers.
 - API -> CIPP: partner/customer network boundary; auth and signatures validated here.
 - Mirror write path: durable persistence boundary where idempotency/replay decisions are finalized.
@@ -94,6 +90,7 @@ Provide typed implementations for:
 - `suspendUser`/`resumeUser` if not already implemented in-phase
 
 Error compatibility:
+
 - Use existing `ProviderError` hierarchy from `packages/core`.
 - Add new codes only if required, and preserve current ones: `generic`, `not_found`, `quota_exceeded`, `network_timeout`, `expired_refresh_token`.
 - Keep all HTTP translation in API layer to canonical action-envelope statuses used by Phase-1 API.
@@ -101,9 +98,11 @@ Error compatibility:
 ## 6) Webhook ingest path
 
 Endpoint:
+
 - `POST /api/v1/webhooks/cipp/customer-change`
 
 Verification pipeline:
+
 - Read signature from header.
 - Resolve secret by tenant/customer binding.
 - Verify HMAC (constant-time compare).
@@ -111,12 +110,14 @@ Verification pipeline:
 - Enforce replay window with event timestamp + skew tolerance.
 
 Idempotency strategy:
+
 - Persist `{ eventId, payloadHash, customerId }` with TTL.
 - If same `eventId` already seen and same hash => `409`/`200` (already processed).
 - If same `eventId` different payload => `409` + `webhook_replay_conflict`.
 - If `eventTime` older than persisted watermark => mark `stale` and ignore.
 
 Processing:
+
 - Decode event to canonical `CustomerChangeCommand`.
 - Push payload to queue (`cipp-event-ingest`) with correlation context.
 - Worker dequeues and applies upsert (`upsertCustomerMirror`, soft-delete semantics where supported).
@@ -142,9 +143,11 @@ sequenceDiagram
 ## 7) Reconciliation loop
 
 Schedule:
+
 - `ReconcileCustomers` timer trigger every `15m`.
 
 State transition:
+
 ```mermaid
 stateDiagram-v2
   [*] --> PendingRun
@@ -160,6 +163,7 @@ stateDiagram-v2
 ```
 
 Algorithm:
+
 - Pull current remote customer snapshot via adapter `listCustomers` (and possibly `listUsers` for fingerprinting).
 - Compare with mirror by `customerId`.
 - For each diff:
@@ -200,16 +204,19 @@ sequenceDiagram
 ## 9) Test matrix (minimal required for GST-23)
 
 Contract/unit tests:
+
 - `packages/adapter-cipp`: smoke with representative fixtures from `docs/cipp-api-surface.md`.
 - IdentityProvider contract suite reuse: `runIdentityProviderContractSuite` against CIPP adapter when endpoint mapping is available.
 
 API tests:
+
 - webhook success + missing signature + malformed signature + duplicate id + stale timestamp.
 - idempotency and replay key behavior when same event repeats with same/different payload.
 - queue worker out-of-order event simulation.
 - reconcile loop: missed event replay heals mirror state.
 
 End-to-end tests:
+
 - inject one webhook, assert single mirror row write.
 - inject duplicate webhook, assert no duplicate writes.
 - skip webhook then run reconcile and verify recovery.

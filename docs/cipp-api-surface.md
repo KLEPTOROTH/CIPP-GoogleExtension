@@ -184,6 +184,7 @@ Notes:
 Evidence date: 2026-05-28
 
 Primary sources:
+
 - CIPP OpenAPI spec (`openapi.json`) from `KelvinTegelaar/CIPP-API` commit `6871d267ebec580b5097f44e7623c0d71c2c5581`
 - CIPP docs: API setup/auth and hosted integration guidance
   - https://docs.cipp.app/api-documentation/setup-and-authentication
@@ -191,19 +192,21 @@ Primary sources:
   - https://docs.cipp.app/setup/self-hosting-guide/self-hosted-api-setup
 
 Parity legend:
+
 - `full`: endpoint exists in CIPP API surface and hosted/self-hosted setup paths both documented.
 - `partial`: endpoint exists but hosted-vs-self-hosted behavior is not fully documented at endpoint granularity.
 - `missing`: required endpoint not found in current CIPP API surface.
 
-| ARC adapter operation | CIPP endpoint(s) | Hosted | Self-hosted | Parity |
-|---|---|---|---|---|
-| List customers (`listCustomers`) | `GET /ListTenants` | Available through CIPP-API client flow | Available via self-hosted API setup + CIPP-API client flow | `full` |
-| List users (`listUsers`) | `GET /ListUsers` | Available through CIPP-API client flow | Available via self-hosted API setup + CIPP-API client flow | `full` |
-| Get user (`getUser`) | `GET /ListUsers` with `UserID` query | Available | Available | `full` |
-| Suspend user (`suspendUser`) | `GET /ExecDisableUser` with `Enable=false` | Available | Available | `full` |
-| Resume user (`resumeUser`) | `GET /ExecDisableUser` with `Enable=true` | Available | Available | `full` |
-| Webhook ingest (future phase) | `GET/POST /PublicWebhooks` | Endpoint present; hosted event catalog not fully documented | Endpoint present | `partial` |
+| ARC adapter operation            | CIPP endpoint(s)                           | Hosted                                                      | Self-hosted                                                | Parity    |
+| -------------------------------- | ------------------------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------- | --------- |
+| List customers (`listCustomers`) | `GET /ListTenants`                         | Available through CIPP-API client flow                      | Available via self-hosted API setup + CIPP-API client flow | `full`    |
+| List users (`listUsers`)         | `GET /ListUsers`                           | Available through CIPP-API client flow                      | Available via self-hosted API setup + CIPP-API client flow | `full`    |
+| Get user (`getUser`)             | `GET /ListUsers` with `UserID` query       | Available                                                   | Available                                                  | `full`    |
+| Suspend user (`suspendUser`)     | `GET /ExecDisableUser` with `Enable=false` | Available                                                   | Available                                                  | `full`    |
+| Resume user (`resumeUser`)       | `GET /ExecDisableUser` with `Enable=true`  | Available                                                   | Available                                                  | `full`    |
+| Webhook ingest (future phase)    | `GET/POST /PublicWebhooks`                 | Endpoint present; hosted event catalog not fully documented | Endpoint present                                           | `partial` |
 
 CTO recommendation (GST-22 gate):
+
 - `PROCEED` for v0.1 read + suspend/resume scope using the operations above.
 - Do not gate v0.1 on webhook parity; treat webhook behaviors as phase-gated until hosted event coverage is explicitly validated in-production.

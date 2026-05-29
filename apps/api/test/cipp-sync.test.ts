@@ -70,6 +70,50 @@ describe('cipp webhook idempotency + reconcile healing', () => {
     expect(parsed).toEqual({ accepted: false, reason: 'invalid_payload' });
   });
 
+  it('rejects webhook payloads with non-string identifier fields', async () => {
+    const secret = 'super-secret';
+    const rawBody = JSON.stringify({
+      eventId: 123,
+      eventType: 'customer.updated',
+      customerId: 'cust-1',
+      displayName: 'Acme',
+      cippTenantId: 'tenant-1',
+      sourceVersion: 2,
+      eventTime: new Date().toISOString(),
+    });
+    const signature = `sha256=${buildSignature(rawBody, secret)}`;
+
+    const parsed = processWebhookEvent({
+      rawBody,
+      signature,
+      config: { secret, replayWindowSeconds: 300 },
+    });
+
+    expect(parsed).toEqual({ accepted: false, reason: 'invalid_payload' });
+  });
+
+  it('rejects webhook payloads with non-string eventTime', async () => {
+    const secret = 'super-secret';
+    const rawBody = JSON.stringify({
+      eventId: 'evt-typed',
+      eventType: 'customer.updated',
+      customerId: 'cust-1',
+      displayName: 'Acme',
+      cippTenantId: 'tenant-1',
+      sourceVersion: 2,
+      eventTime: 1716942000,
+    });
+    const signature = `sha256=${buildSignature(rawBody, secret)}`;
+
+    const parsed = processWebhookEvent({
+      rawBody,
+      signature,
+      config: { secret, replayWindowSeconds: 300 },
+    });
+
+    expect(parsed).toEqual({ accepted: false, reason: 'invalid_payload' });
+  });
+
   it('heals missed webhook by reconciliation snapshot', async () => {
     const store = new InMemoryCippSyncStore();
 
@@ -120,6 +164,32 @@ describe('cipp webhook idempotency + reconcile healing', () => {
     expect((await store.getCustomer('cust-local'))?.bindingState).toBe('unbound');
   });
 
+  it('does not mutate mirror when reconcile snapshot fetch fails', async () => {
+    const store = new InMemoryCippSyncStore();
+    await store.applyWebhookEvent({
+      eventId: 'evt-fail-closed',
+      eventType: 'customer.updated',
+      customerId: 'cust-fail-closed',
+      displayName: 'Bound Customer',
+      cippTenantId: 'tenant-fail-closed',
+      sourceVersion: 3,
+      eventTime: new Date().toISOString(),
+    });
+
+    await expect(
+      runReconcile(
+        {
+          async listCustomerMirrorSnapshot() {
+            throw new Error('upstream unavailable');
+          },
+        },
+        store,
+      ),
+    ).rejects.toThrow('upstream unavailable');
+
+    expect((await store.getCustomer('cust-fail-closed'))?.bindingState).toBe('bound');
+  });
+
   it('claims each received webhook once under concurrent drain attempts', async () => {
     const store = new InMemoryCippSyncStore();
     await store.enqueueWebhookEvent({
@@ -141,11 +211,65 @@ describe('cipp webhook idempotency + reconcile healing', () => {
       eventTime: new Date().toISOString(),
     });
 
-    const [first, second] = await Promise.all([store.drainWebhookEvents(2), store.drainWebhookEvents(2)]);
+    const [first, second] = await Promise.all([
+      store.drainWebhookEvents(2),
+      store.drainWebhookEvents(2),
+    ]);
     const totalApplied = first.applied + second.applied;
     const snapshot = await store.snapshot();
 
     expect(totalApplied).toBe(2);
     expect(snapshot).toHaveLength(2);
+  });
+
+  it('does not process events already marked processing by another drain owner', async () => {
+    const store = new InMemoryCippSyncStore();
+    const now = new Date().toISOString();
+
+    await store.enqueueWebhookEvent({
+      eventId: 'evt-received',
+      eventType: 'customer.updated',
+      customerId: 'cust-received',
+      displayName: 'Received',
+      cippTenantId: 'tenant-owned',
+      sourceVersion: 1,
+      eventTime: now,
+    });
+
+    (store as unknown as {
+      webhookEvents: Map<
+        string,
+        {
+          customerId: string;
+          eventType: 'customer.updated' | 'customer.deleted';
+          eventId: string;
+          payloadHash: string;
+          sourceVersion: number;
+          displayName: string;
+          cippTenantId: string;
+          eventTime: string;
+          firstSeenAt: string;
+          status: 'received' | 'processing' | 'applied' | 'duplicate' | 'stale' | 'replay_conflict';
+        }
+      >;
+    }).webhookEvents.set('evt-foreign-processing', {
+      customerId: 'cust-foreign',
+      eventType: 'customer.updated',
+      eventId: 'evt-foreign-processing',
+      payloadHash: 'foreign-hash',
+      sourceVersion: 1,
+      displayName: 'Foreign',
+      cippTenantId: 'tenant-owned',
+      eventTime: now,
+      firstSeenAt: now,
+      status: 'processing',
+    });
+
+    const drained = await store.drainWebhookEvents(10);
+    const snapshot = await store.snapshot();
+
+    expect(drained.applied).toBe(1);
+    expect(snapshot).toHaveLength(1);
+    expect(snapshot[0]?.customerId).toBe('cust-received');
   });
 });

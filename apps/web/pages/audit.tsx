@@ -104,7 +104,7 @@ export default function AuditPage() {
               <TableCell>Reason</TableCell>
             </TableRow>
           </TableHead>
-        <TableBody>
+          <TableBody>
             {rows.map((row, index) => (
               <TableRow
                 key={row.id}

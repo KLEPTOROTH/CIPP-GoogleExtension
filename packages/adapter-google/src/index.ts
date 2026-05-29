@@ -39,10 +39,7 @@ export interface GoogleBindingRecord {
 export interface GoogleDirectoryService {
   listUsers(ctx: DirectoryRequestContext): Promise<readonly DirectoryUser[]>;
   getUser(ctx: DirectoryRequestContext): Promise<DirectoryUser | null>;
-  updateUserSuspension(
-    ctx: DirectoryRequestContext,
-    suspended: boolean,
-  ): Promise<DirectoryUser>;
+  updateUserSuspension(ctx: DirectoryRequestContext, suspended: boolean): Promise<DirectoryUser>;
 }
 
 export interface GoogleAuditEvent {
@@ -124,7 +121,9 @@ const isQuota = (error: { status?: number; message?: string; code?: string }): b
   const status = error.status;
   const code = error.code?.toLowerCase();
   const message = (error.message ?? '').toLowerCase();
-  return status === 429 || status === 403 || code === 'rate_limit_exceeded' || message.includes('quota');
+  return (
+    status === 429 || status === 403 || code === 'rate_limit_exceeded' || message.includes('quota')
+  );
 };
 
 const isTimeout = (error: { status?: number; code?: string; message?: string }): boolean => {
@@ -189,7 +188,10 @@ export class GoogleAdapter implements IdentityProvider {
   private readonly maxQuotaRetries: number;
   private readonly random: () => number;
   private readonly now: () => number;
-  private readonly setRequiresReauth?: (customer: Customer, reason: 'invalid_grant') => Promise<void> | void;
+  private readonly setRequiresReauth?: (
+    customer: Customer,
+    reason: 'invalid_grant',
+  ) => Promise<void> | void;
   private readonly enableDomainWideDelegation: boolean;
   private readonly onAuditEvent?: (event: GoogleAuditEvent) => Promise<void> | void;
 

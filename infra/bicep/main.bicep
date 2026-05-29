@@ -40,7 +40,7 @@ param resourceTags object = {
 @allowed([ 'Y1', 'EP1' ])
 param functionPlanSku string
 
-@description('Skip the Static Web App in environments where the front-end is hosted elsewhere. Defaults to false; both dev and prod ship it.')
+@description('Skip the Static Web App in environments where the front-end is hosted elsewhere. Defaults to true; both dev and prod ship it.')
 param deployStaticWebApp bool = true
 
 // --------------------------------------------------------------------

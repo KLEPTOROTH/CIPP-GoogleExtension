@@ -43,7 +43,7 @@ Per environment (`dev`, `prod`), in the Azure subscription that owns the resourc
    - `AZURE_${env}_RG` (e.g. `AZURE_DEV_RG`) — resource group name.
 6. Paste the identity's `principalId` into `infra/bicep/${env}.bicepparam` → `deployIdentityPrincipalId` and merge.
 
-After step 6 the first deploy succeeds and creates the rest of the baseline.
+Until step 5 lands, every deploy-azure.yml job is skipped (green) via the `vars.AZURE_DEPLOY_CLIENT_ID != ''` guard. After step 6 the first deploy succeeds and creates the rest of the baseline.
 
 ## What the workflow does on each event
 

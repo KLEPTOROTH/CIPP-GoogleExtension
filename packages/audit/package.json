@@ -6,6 +6,13 @@
   "description": "Append-only audit write/read surface for action envelopes.",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
+    }
+  },
   "files": ["dist"],
   "scripts": {
     "build": "tsc -p tsconfig.json",

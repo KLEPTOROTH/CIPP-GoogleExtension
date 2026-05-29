@@ -1,9 +1,4 @@
-import type {
-  AuditEntry,
-  Customer,
-  ProviderResult,
-  User,
-} from './types.js';
+import type { AuditEntry, Customer, ProviderResult, User } from './types.js';
 
 export interface IdentityProvider {
   listUsers(customer: Customer): Promise<ProviderResult<readonly User[]>>;

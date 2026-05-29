@@ -8,7 +8,9 @@ interface Props {
   onRetryM365?: () => void;
 }
 
-const chipColorForStatus = (status: SuspensionState): 'success' | 'warning' | 'error' | 'default' => {
+const chipColorForStatus = (
+  status: SuspensionState,
+): 'success' | 'warning' | 'error' | 'default' => {
   if (status === 'Active') {
     return 'success';
   }

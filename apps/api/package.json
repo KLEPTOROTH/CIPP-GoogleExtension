@@ -8,9 +8,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "func start",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --config ../../vitest.config.ts"
+    "test": "pnpm run test:node && pnpm run test:vitest",
+    "test:node": "tsx --test test/cipp-store-factory.test.ts test/source.test.ts",
+    "test:vitest": "vitest run --config ../../vitest.config.ts test/cipp-sync.test.ts test/health.test.ts test/issue-liveness-policy.test.ts"
   },
   "dependencies": {
     "@azure/data-tables": "13.3.2",
@@ -20,12 +22,10 @@
     "@cipp-google/core": "workspace:*"
   },
   "devDependencies": {
-    "@cipp-google/adapter-mock": "workspace:*",
     "@cipp-google/eslint-config": "workspace:*",
     "@types/node": "20.16.5",
     "eslint": "8.57.1",
     "eslint-config-prettier": "9.1.0",
-    "eslint-import-resolver-typescript": "3.6.3",
     "eslint-plugin-import": "2.30.0",
     "typescript": "5.5.4"
   }

@@ -4,15 +4,11 @@ import {
   NetworkTimeoutError,
   QuotaExceededError,
 } from '@cipp-google/core';
-import type {
-  IdentityProviderConformanceFixture} from '@cipp-google/core/test-conformance';
-import {
-  runIdentityProviderContractSuite,
-} from '@cipp-google/core/test-conformance';
-import { describe, expect, test } from 'vitest';
+import type { IdentityProviderConformanceFixture } from '@cipp-google/core/test-conformance';
+import { runIdentityProviderContractSuite } from '@cipp-google/core/test-conformance';
+import { describe, expect, test, vi } from 'vitest';
 
 import { MockAdapter } from '../src/index.js';
-
 
 const fixture: IdentityProviderConformanceFixture = {
   customer: {
@@ -84,9 +80,22 @@ test('MockAdapter supports fault injection error classes', async () => {
 });
 
 test('MockAdapter exposes latencyMs control', async () => {
-  const adapter = new MockAdapter({ initialUsers: [...fixture.seedUsers], latencyMs: 20 });
-  const before = Date.now();
-  await adapter.listUsers(fixture.customer);
-  const after = Date.now();
-  expect(after - before).toBeGreaterThanOrEqual(20);
+  vi.useFakeTimers();
+  try {
+    const adapter = new MockAdapter({ initialUsers: [...fixture.seedUsers], latencyMs: 20 });
+    let settled = false;
+    const result = adapter.listUsers(fixture.customer).then((response) => {
+      settled = true;
+      return response;
+    });
+
+    await vi.advanceTimersByTimeAsync(19);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await result).toMatchObject({ ok: true });
+    expect(settled).toBe(true);
+  } finally {
+    vi.useRealTimers();
+  }
 });

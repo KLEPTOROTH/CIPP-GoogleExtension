@@ -1,6 +1,10 @@
 /** ESLint config preset for Node services (Azure Functions, libraries). */
 module.exports = {
-  extends: [require.resolve('./index.cjs'), 'plugin:import/recommended', 'plugin:import/typescript'],
+  extends: [
+    require.resolve('./index.cjs'),
+    'plugin:import/recommended',
+    'plugin:import/typescript',
+  ],
   plugins: ['import'],
   env: {
     node: true,

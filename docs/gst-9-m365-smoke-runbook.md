@@ -87,4 +87,3 @@ Record the following in GST-9 comment/update:
    - Verifies evidence quality and confirms acceptance.
 3. Staff Engineer
    - Handles code-level remediation if smoke fails.
-

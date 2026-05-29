@@ -144,9 +144,11 @@ export class M365Adapter implements IdentityProvider {
     this.keyVaultBaseUrl = options.keyVaultBaseUrl;
     this.keyVaultApiVersion = options.keyVaultApiVersion ?? DEFAULT_KEYVAULT_API_VERSION;
     this.graphBaseUrl = options.graphBaseUrl ?? DEFAULT_GRAPH_BASE_URL;
-    this.tenantIdSecretNameTemplate = options.tenantIdSecretNameTemplate ?? 'gdap/{customerId}/tenant-id';
+    this.tenantIdSecretNameTemplate =
+      options.tenantIdSecretNameTemplate ?? 'gdap/{customerId}/tenant-id';
     this.graphClientIdSecretName = options.graphClientIdSecretName ?? 'gdap/graph/client-id';
-    this.graphClientSecretSecretName = options.graphClientSecretSecretName ?? 'gdap/graph/client-secret';
+    this.graphClientSecretSecretName =
+      options.graphClientSecretSecretName ?? 'gdap/graph/client-secret';
     this.graphTenantSecretName = options.graphTenantSecretName ?? 'gdap/graph/tenant-id';
     this.managedIdentityResource = options.managedIdentityResource ?? KEYVAULT_TOKEN_RESOURCE;
     this.managedIdentityClientId = options.managedIdentityClientId;
@@ -240,9 +242,13 @@ export class M365Adapter implements IdentityProvider {
     }
 
     const response = await this.requestWithRetry(() =>
-      this.graphPatch(`${this.graphBaseUrl}/users/${encodePathSegment(key)}`, contextResult.value.graphToken, {
-        accountEnabled: false,
-      }),
+      this.graphPatch(
+        `${this.graphBaseUrl}/users/${encodePathSegment(key)}`,
+        contextResult.value.graphToken,
+        {
+          accountEnabled: false,
+        },
+      ),
     );
 
     if (!response.ok) {
@@ -285,9 +291,13 @@ export class M365Adapter implements IdentityProvider {
     }
 
     const response = await this.requestWithRetry(() =>
-      this.graphPatch(`${this.graphBaseUrl}/users/${encodePathSegment(key)}`, contextResult.value.graphToken, {
-        accountEnabled: true,
-      }),
+      this.graphPatch(
+        `${this.graphBaseUrl}/users/${encodePathSegment(key)}`,
+        contextResult.value.graphToken,
+        {
+          accountEnabled: true,
+        },
+      ),
     );
 
     if (!response.ok) {
@@ -436,7 +446,10 @@ export class M365Adapter implements IdentityProvider {
       return cache.value;
     }
 
-    const tokenResult = await this.getManagedIdentityToken(this.managedIdentityResource, this.managedIdentityClientId);
+    const tokenResult = await this.getManagedIdentityToken(
+      this.managedIdentityResource,
+      this.managedIdentityClientId,
+    );
     if (!tokenResult.ok) {
       return null;
     }
@@ -510,13 +523,18 @@ export class M365Adapter implements IdentityProvider {
     if (!response.ok) {
       return {
         ok: false,
-        error: new GenericProviderError(`managed identity token request failed: ${response.status} ${response.statusText}`),
+        error: new GenericProviderError(
+          `managed identity token request failed: ${response.status} ${response.statusText}`,
+        ),
       };
     }
 
     const payload = (await response.json()) as TokenResponse;
     if (!payload.access_token) {
-      return { ok: false, error: new GenericProviderError('managed identity response missing access_token') };
+      return {
+        ok: false,
+        error: new GenericProviderError('managed identity response missing access_token'),
+      };
     }
 
     this.kvSecretCache.set(tokenCacheKey, {
@@ -533,8 +551,7 @@ export class M365Adapter implements IdentityProvider {
     clientSecret: string,
     scope: string,
   ): Promise<
-    | { ok: true; value: string; expiresInMs: number | null }
-    | { ok: false; error: ProviderError }
+    { ok: true; value: string; expiresInMs: number | null } | { ok: false; error: ProviderError }
   > {
     const url = `${OAUTH_TOKEN_ENDPOINT}/${encodePathSegment(tenantId)}/oauth2/v2.0/token`;
     const form = new URLSearchParams({
@@ -558,13 +575,18 @@ export class M365Adapter implements IdentityProvider {
       if (!response.ok) {
         return {
           ok: false,
-          error: new GenericProviderError(`graph token request failed: ${response.status} ${response.statusText}`),
+          error: new GenericProviderError(
+            `graph token request failed: ${response.status} ${response.statusText}`,
+          ),
         };
       }
 
       const payload = (await response.json()) as TokenResponse;
       if (!payload.access_token) {
-        return { ok: false, error: new GenericProviderError('graph token response missing access_token') };
+        return {
+          ok: false,
+          error: new GenericProviderError('graph token response missing access_token'),
+        };
       }
 
       return {
@@ -575,13 +597,20 @@ export class M365Adapter implements IdentityProvider {
     } catch (error) {
       return {
         ok: false,
-        error: new NetworkError(error instanceof Error ? error.message : 'graph token request failed'),
+        error: new NetworkError(
+          error instanceof Error ? error.message : 'graph token request failed',
+        ),
       };
     }
   }
 
-  private async graphGet<T>(url: string, token: string, headers?: Record<string, string>): Promise<
-    { ok: true; value: T; etag?: string; status: number } | { ok: false; status: number; errorMessage?: string; etag?: string }
+  private async graphGet<T>(
+    url: string,
+    token: string,
+    headers?: Record<string, string>,
+  ): Promise<
+    | { ok: true; value: T; etag?: string; status: number }
+    | { ok: false; status: number; errorMessage?: string; etag?: string }
   > {
     let response: Response;
     try {
@@ -602,7 +631,12 @@ export class M365Adapter implements IdentityProvider {
     }
 
     if (response.status === 204) {
-      return { ok: false, status: response.status, errorMessage: 'No content', etag: response.headers.get('etag') ?? undefined };
+      return {
+        ok: false,
+        status: response.status,
+        errorMessage: 'No content',
+        etag: response.headers.get('etag') ?? undefined,
+      };
     }
 
     if (response.status === 304) {
@@ -640,9 +674,11 @@ export class M365Adapter implements IdentityProvider {
         };
   }
 
-  private async graphPatch(url: string, token: string, body: Record<string, unknown>): Promise<
-    { ok: true; status: number } | { ok: false; status: number; error: ProviderError }
-  > {
+  private async graphPatch(
+    url: string,
+    token: string,
+    body: Record<string, unknown>,
+  ): Promise<{ ok: true; status: number } | { ok: false; status: number; error: ProviderError }> {
     try {
       const response = await this.fetchClient(url, {
         method: 'PATCH',
@@ -667,19 +703,28 @@ export class M365Adapter implements IdentityProvider {
         };
       }
 
-      return { ok: false, status: response.status, error: new GenericProviderError('unexpected graph patch response') };
+      return {
+        ok: false,
+        status: response.status,
+        error: new GenericProviderError('unexpected graph patch response'),
+      };
     } catch (error) {
-      return { ok: false, status: 0, error: new NetworkError(error instanceof Error ? error.message : 'patch failed') };
+      return {
+        ok: false,
+        status: 0,
+        error: new NetworkError(error instanceof Error ? error.message : 'patch failed'),
+      };
     }
   }
 
-  private async requestWithRetry<T extends {
-    ok: boolean;
-    status: number;
-  }>(
+  private async requestWithRetry<
+    T extends {
+      ok: boolean;
+      status: number;
+    },
+  >(
     request: () => Promise<
-      | T
-      | { ok: false; status: number; error?: ProviderError; etag?: string; errorMessage?: string }
+      T | { ok: false; status: number; error?: ProviderError; etag?: string; errorMessage?: string }
     >,
   ): Promise<
     | T
@@ -785,11 +830,7 @@ export class M365Adapter implements IdentityProvider {
     return { ok: false, error: new GenericProviderError(message) };
   }
 
-  private mapGraphUserToUser(
-    customer: Customer,
-    tenantId: string,
-    raw: GraphUserResponse,
-  ): User {
+  private mapGraphUserToUser(customer: Customer, tenantId: string, raw: GraphUserResponse): User {
     return {
       id: raw.id,
       customerId: customer.id,

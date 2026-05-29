@@ -17,13 +17,13 @@
 
 ## 2) Test classifications and ownership
 
-| Layer | Responsible owner | Current artifacts | Completion signal |
-|---|---|---|---|
-| Unit | Devs + QA | `*.test.ts` in `packages/*/test` and `apps/*/test` | no fixture/network required |
-| Contract | QA + Staff Engineer | `runIdentityProviderContractSuite` | `IdentityProvider` methods satisfy common contract |
-| Integration | QA | fixture harness + recorded requests | deterministic fixture replay pass |
-| Sandbox-E2E | QA + Release Engineer | phase-2 follow-up pipelines | real tenant call pass for `users.list` in both ecosystems |
-| Browser-E2E | QA + Staff Engineer | `apps/web/tests/e2e/smoke.spec.ts` | one smoke spec target only in v0.1 |
+| Layer       | Responsible owner     | Current artifacts                                  | Completion signal                                         |
+| ----------- | --------------------- | -------------------------------------------------- | --------------------------------------------------------- |
+| Unit        | Devs + QA             | `*.test.ts` in `packages/*/test` and `apps/*/test` | no fixture/network required                               |
+| Contract    | QA + Staff Engineer   | `runIdentityProviderContractSuite`                 | `IdentityProvider` methods satisfy common contract        |
+| Integration | QA                    | fixture harness + recorded requests                | deterministic fixture replay pass                         |
+| Sandbox-E2E | QA + Release Engineer | phase-2 follow-up pipelines                        | real tenant call pass for `users.list` in both ecosystems |
+| Browser-E2E | QA + Staff Engineer   | `apps/web/tests/e2e/smoke.spec.ts`                 | one smoke spec target only in v0.1                        |
 
 ## 3) Data flow and component boundaries
 
@@ -46,14 +46,17 @@ flowchart LR
 ## 4) Fixture model and policies
 
 ### Canonical rule
+
 All third-party traffic that is expensive, rate-limited, or externalized is recorded once and replayed in CI.
 
 ### Storage layout
+
 - Graph recordings in `tools/test/fixtures/microsoft-graph/`
 - Google Admin recordings in `tools/test/fixtures/google-admin/`
 - Deterministic redactions are applied before write (`access tokens`, IDs, timestamps, request ids)
 
 ### Failure injection policy
+
 - Default policy: **hard-fail** on fixture drift unless refresh/re-record is approved by QA.
 - For CI:
   - replay mode must be used unless explicit env override enables record mode
@@ -71,9 +74,9 @@ All third-party traffic that is expensive, rate-limited, or externalized is reco
 
 ## 6) Sandbox tenant ownership model
 
-| Tenant family | Owner | Primary responsibility | Escalation condition |
-|---|---|---|---|
-| Microsoft Graph tenant | Release Engineer + QA | provisioning + daily viability checks | stale tenant, tenant lockout, failed renewal |
+| Tenant family           | Owner                 | Primary responsibility                              | Escalation condition                             |
+| ----------------------- | --------------------- | --------------------------------------------------- | ------------------------------------------------ |
+| Microsoft Graph tenant  | Release Engineer + QA | provisioning + daily viability checks               | stale tenant, tenant lockout, failed renewal     |
 | Google Workspace tenant | Release Engineer + QA | provisioning + OAuth/service-account refresh checks | OAuth drift, user import failure, tenant lockout |
 
 ## 7) Diagrams
