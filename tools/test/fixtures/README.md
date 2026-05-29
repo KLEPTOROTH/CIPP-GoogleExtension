@@ -28,6 +28,7 @@ FIXTURE_MODE=record pnpm exec tsx tools/test/fixtures/google-admin/record-users-
 ## Replay expectation
 
 - Files are sanitized:
+
   - auth headers removed/redacted
   - request tokens removed from query-string fragments
   - deterministic ordering for stable diffs

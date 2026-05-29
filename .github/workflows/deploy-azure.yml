@@ -14,19 +14,19 @@ name: deploy-azure
 on:
   pull_request:
     paths:
-      - "infra/**"
-      - "apps/api/**"
-      - ".github/workflows/deploy-azure.yml"
+      - 'infra/**'
+      - 'apps/api/**'
+      - '.github/workflows/deploy-azure.yml'
   push:
     branches: [main]
     paths:
-      - "infra/**"
-      - "apps/api/**"
-      - ".github/workflows/deploy-azure.yml"
+      - 'infra/**'
+      - 'apps/api/**'
+      - '.github/workflows/deploy-azure.yml'
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment to deploy"
+        description: 'Environment to deploy'
         required: true
         type: choice
         options: [dev, prod]

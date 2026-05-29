@@ -55,24 +55,29 @@ stateDiagram-v2
 Priority is by release risk.
 
 1. **High — Adapter contract failures**
+
 - `packages/adapter-google/test/identity-provider.adapter-google.error-mapping.test.ts`
 - `packages/adapter-google/test/identity-provider.adapter-google.contract.test.ts`
 - `packages/adapter-m365/test/identity-provider.contract.test.ts`
 
 Observed failure patterns:
+
 - Google: `listUsers` contract path produces object-shape drift versus fixture seed.
 - Google: quota bucket test can bypass the quota error branch when list-cache short-circuits.
 - M365: multiple contract cases fail (`listUsers`, `getUser`, suspend/resume, snapshot, ETag path), consistent with cache/TTL semantics and Graph retry edge handling.
 
 2. **Medium — adapter-mock compile/build contract**
+
 - `packages/adapter-mock/tsconfig.json` currently sets `rootDir: ./src` while `include` pulls `test/**/*`, causing TS6059 in build pipelines.
 
 3. **Low — verification preconditions**
+
 - Any environment mismatch in Node/pnpm install path blocks full-suite revalidation. This is an infra condition, not a code defect, and must be tracked separately.
 
 ## 5) Productive unblock plan (explicit owners)
 
 ### 5.1 Staff Engineer
+
 - Resolve `GoogleAdapter` contract compliance:
   - Align `runIdentityProviderContractSuite` expectations with provider metadata in adapter output OR normalize results before compare.
   - Ensure list-cache does not mask bounded quota failure scenarios in error-path tests.
@@ -85,6 +90,7 @@ Observed failure patterns:
 - Add/adjust minimal regression tests adjacent to fixes.
 
 ### 5.2 QA Engineer
+
 - Re-run this scoped command after each implementation checkpoint:
   - `pnpm turbo run test --filter=@cipp-google/core --filter=@cipp-google/adapter-google --filter=@cipp-google/adapter-m365 --filter=@cipp-google/adapter-mock --filter=@cipp-google/api --filter=@cipp-google/web`
 - Confirm replay proof remains green:
@@ -93,6 +99,7 @@ Observed failure patterns:
 - Archive artifacts and attach evidence links in issue thread.
 
 ### 5.3 Release/Infra owner
+
 - Continue to maintain Node/runtime/pnpm behavior used in this workspace.
 - Keep branch-protection + CI command surfaces stable while review work happens.
 

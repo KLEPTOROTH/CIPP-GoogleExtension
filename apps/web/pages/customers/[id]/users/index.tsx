@@ -44,15 +44,15 @@ export default function CustomerUsersPage() {
         Customer: {customerId ?? 'unknown'}
       </Typography>
       <TableContainer component={Paper} sx={{ maxWidth: 1100 }}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Primary email</TableCell>
-            <TableCell>License</TableCell>
-            <TableCell>M365</TableCell>
-            <TableCell>Google</TableCell>
-            <TableCell>Last sign-in (M365)</TableCell>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Primary email</TableCell>
+              <TableCell>License</TableCell>
+              <TableCell>M365</TableCell>
+              <TableCell>Google</TableCell>
+              <TableCell>Last sign-in (M365)</TableCell>
               <TableCell>Last sign-in (Google)</TableCell>
               <TableCell>Mismatch</TableCell>
               <TableCell>Overall</TableCell>
@@ -79,9 +79,7 @@ export default function CustomerUsersPage() {
                     <SuspensionStatus status={overall} />
                   </TableCell>
                   <TableCell>
-                    <Link href={`/customers/${row.customerId}/users/${row.key}`}>
-                      Open
-                    </Link>
+                    <Link href={`/customers/${row.customerId}/users/${row.key}`}>Open</Link>
                   </TableCell>
                 </TableRow>
               );

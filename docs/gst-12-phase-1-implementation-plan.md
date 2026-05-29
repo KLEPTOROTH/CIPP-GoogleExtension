@@ -1,11 +1,14 @@
-# GST-12 Phase 1 Execution Plan  
+# GST-12 Phase 1 Execution Plan
+
 ## Product: merged user list + unified suspend UI + audit page
 
 Status: **Locked draft for implementation handoff**  
 Source authority: GST-4 + this issue (`GST-12`)
 
 ## 1) Problem statement
+
 Phase 1 must ship a deterministic v0.1 web surface for MSP operators:
+
 - `/customers` list with per-customer binding states.
 - `/customers/:id/users` merged identity list across M365 + Google.
 - `/customers/:id/users/:key` user detail with suspend / resume.
@@ -18,6 +21,7 @@ Current repo is scaffolding-only, so this plan treats `/apps/core` contracts and
 ## 2) Architecture and ownership boundaries
 
 ### 2.1 Component diagram
+
 ```mermaid
 graph TD
   Browser["Next.js Web UI (/apps/web)"] -->|HTTP JSON| API["Azure Functions API (/apps/api)"]
@@ -36,6 +40,7 @@ graph TD
 ```
 
 ### 2.2 Data flow (steady-state)
+
 ```mermaid
 sequenceDiagram
   autonumber
@@ -69,6 +74,7 @@ sequenceDiagram
 ```
 
 ### 2.3 State machine (per merged user)
+
 ```mermaid
 stateDiagram-v2
   [*] --> Active
@@ -106,6 +112,7 @@ Create shared API and UI contracts in `packages/core/src/index.ts`:
 - all endpoints return either `{ data: T }` or `{ error: ApiError }`.
 
 ### Acceptance mapping to contract
+
 - `Inconsistent` is only produced when `suspend`/`resume` partial outcome occurs.
 - `Unknown` is for missing connector identity data or non-deterministic upstream responses.
 - Retry affordance is driven by `SuspendChannelResult` details (`failed` channels only).
@@ -115,6 +122,7 @@ Create shared API and UI contracts in `packages/core/src/index.ts`:
 All endpoints under `/api/v1` for explicit versioning.
 
 ### 4.1 Read endpoints
+
 - `GET /api/v1/customers`
   - Response: `{ data: CustomerSummary[] }`
 - `GET /api/v1/customers/:customerId/users`
@@ -126,25 +134,30 @@ All endpoints under `/api/v1` for explicit versioning.
   - Response: `{ data: AuditEvent[]; nextCursor?: string }`
 
 ### 4.2 Actions
+
 - `POST /api/v1/customers/:customerId/users/:userKey/suspend`
 - `POST /api/v1/customers/:customerId/users/:userKey/resume`
   - Body: `{ reason?: string; dryRun?: boolean }`
-  - Response: 
+  - Response:
     - `{ data: { outcome: SuspensionOutcome; result: MergedUserRow; auditId?: string; channels: SuspendChannelResult[] } }`
 
 ## 5) UI architecture and mandatory components
 
 ### Routes
+
 1. `/customers`
+
    - Table with columns: customer name, M365 binding, Google binding, last connected, actions.
    - Action: navigate to merged users.
 
 2. `/customers/[id]/users`
+
    - Table columns: name, primary email, M365 status, Google status, last sign-in, overall status chip.
    - show unmatched badge from `mismatchFlags`.
    - row action to open user detail.
 
 3. `/customers/[id]/users/[key]`
+
    - Detail card and unified controls:
      - single `UnifiedSuspendButton` with states:
        - `success-both` (green/primary)
@@ -158,6 +171,7 @@ All endpoints under `/api/v1` for explicit versioning.
    - table must support keyboard navigation.
 
 ### Shared components
+
 - `SuspensionStatus` chip
   - `Active`, `Suspended`, `Inconsistent`, `Unknown`
   - Inconsistent renders inline actions: “Retry Google” and “Retry M365”.
@@ -169,11 +183,13 @@ All endpoints under `/api/v1` for explicit versioning.
 ## 6) Error handling and trust boundaries
 
 ### Trust boundary
+
 - UI only renders values from API contract; no direct identity calls.
 - API is the only caller of adapters; adapters can return partial success.
 - Every write path must create an audit event before response is returned.
 
 ### Failure handling
+
 - API returns typed `ApiError`; HTTP status mirrors class:
   - 4xx for input/authz issues.
   - 5xx for adapter/runtime failures.
@@ -185,11 +201,13 @@ All endpoints under `/api/v1` for explicit versioning.
 ## 7) Test plan (minimal but complete for v0.1)
 
 ### Targeted unit/API contract tests
+
 - `packages/core`: exhaustive union exhaustiveness + serialized schema checks for error variants.
 - `apps/api`: contract tests for all new endpoints + partial failure matrix on mock adapters.
 - `apps/web`: component tests for `SuspensionStatus` and `UnifiedSuspendButton` rendering transitions.
 
 ### Playwright smoke (explicit acceptance)
+
 1. connect customer (stubbed) → `/customers/:id/users` visible with expected merged rows.
 2. suspend from detail page → row shows `Suspended`.
 3. resume → row shows `Active`.
@@ -203,21 +221,25 @@ All endpoints under `/api/v1` for explicit versioning.
    - audit table supports row nav and action row toggles.
 
 ### Coverage by criterion
+
 - All API errors typed and parseable in UI ✅ validated via assertion on `ApiError.code`
 - Partial failure and recoverability ✅ covered in integration path with mock adapter
 
 ## 8) Known risks / assumptions
+
 - No external IdP exists on this branch; a mock adapter is required for phase-gated deliverability.
 - `/customers/:id/users/:key` should key by stable ID from merged dataset, not raw email if duplicate aliases exist.
 - A unified list requires deterministic conflict resolution (`prefer Google displayName` etc.) — fixed in adapter layer, not UI.
 
 ## 9) Ownership handoff
+
 - Staff Engineer: implement core contracts, API endpoints, and web pages.
 - QA Engineer: build Playwright smoke matrix and verify typed error rendering + keyboard coverage.
 - Release Engineer: ensure deploy/ci compatibility for Next pages + Azure Functions route updates.
 - CTO review gate: reject any implementation that creates `Inconsistent` without retry affordance or hides partial outcomes.
 
 ## 10) Work split (ready for tickets)
+
 - [ ] GST-12a API: add v1 endpoints + typed `ApiError` contract in `packages/core`.
 - [ ] GST-12b Web: `/customers`, merged users, user detail routes + `SuspensionStatus`.
 - [ ] GST-12c Web: `/audit` + filters + paging.

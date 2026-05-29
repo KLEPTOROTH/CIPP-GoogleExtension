@@ -7,6 +7,7 @@ Source: GST-4 and issue `GST-14`
 ## 1) Goals and non-goals
 
 Goals:
+
 - Enable operator connect flow against CIPP REST.
 - Validate required CIPP API scope coverage before credentials are saved.
 - Import CIPP customers into deterministic `CustomerMirror` metadata.
@@ -14,6 +15,7 @@ Goals:
 - Expose one operational integration status (`connected`, `degraded`, `disconnected`) and one runbook.
 
 Non-goals for GST-14:
+
 - No automated scope expansion after initial connect.
 - No full tenant-wide sync orchestration beyond deterministic customer import.
 - No cross-environment secret replication automation.

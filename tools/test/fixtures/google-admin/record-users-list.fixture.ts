@@ -52,7 +52,8 @@ const buildAuthClient = (): OAuth2Client => {
   const redirectUri = process.env.GOOGLE_AUTH_REDIRECT_URI ?? 'http://localhost';
   const client = new OAuth2Client(clientId, clientSecret, redirectUri);
 
-  const token = process.env.GOOGLE_TEST_ACCESS_TOKEN ?? process.env.GOOGLE_ACCESS_TOKEN ?? 'fixture-token';
+  const token =
+    process.env.GOOGLE_TEST_ACCESS_TOKEN ?? process.env.GOOGLE_ACCESS_TOKEN ?? 'fixture-token';
   const isReplayMode = process.env.FIXTURE_MODE !== 'record';
   const useFixtureToken = process.env.GOOGLE_AUTH_TEST_MODE === 'true' || isReplayMode;
   if (useFixtureToken || token) {

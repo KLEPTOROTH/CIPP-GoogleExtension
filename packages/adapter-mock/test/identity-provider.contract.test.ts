@@ -4,15 +4,11 @@ import {
   NetworkTimeoutError,
   QuotaExceededError,
 } from '@cipp-google/core';
-import type {
-  IdentityProviderConformanceFixture} from '@cipp-google/core/test-conformance';
-import {
-  runIdentityProviderContractSuite,
-} from '@cipp-google/core/test-conformance';
+import type { IdentityProviderConformanceFixture } from '@cipp-google/core/test-conformance';
+import { runIdentityProviderContractSuite } from '@cipp-google/core/test-conformance';
 import { describe, expect, test } from 'vitest';
 
 import { MockAdapter } from '../src/index.js';
-
 
 const fixture: IdentityProviderConformanceFixture = {
   customer: {

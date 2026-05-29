@@ -47,11 +47,11 @@ After step 6 the first deploy succeeds and creates the rest of the baseline.
 
 ## What the workflow does on each event
 
-| Event | Jobs | Effect |
-|---|---|---|
-| PR touching `infra/**` or `apps/api/**` | `what-if-dev` | Runs `az deployment group what-if` against dev. No apply. |
-| Push to `main` touching `infra/**` or `apps/api/**` | `deploy-dev` | Applies Bicep to dev. Stamps `SOURCE_COMMIT_SHA` + `SOURCE_TAG` on the Function App. |
-| `workflow_dispatch` with `environment=prod` | `deploy-prod` (after manual approve) | Applies Bicep to prod. Same SHA/tag stamping. |
+| Event                                               | Jobs                                 | Effect                                                                               |
+| --------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
+| PR touching `infra/**` or `apps/api/**`             | `what-if-dev`                        | Runs `az deployment group what-if` against dev. No apply.                            |
+| Push to `main` touching `infra/**` or `apps/api/**` | `deploy-dev`                         | Applies Bicep to dev. Stamps `SOURCE_COMMIT_SHA` + `SOURCE_TAG` on the Function App. |
+| `workflow_dispatch` with `environment=prod`         | `deploy-prod` (after manual approve) | Applies Bicep to prod. Same SHA/tag stamping.                                        |
 
 ## AGPL §13 — keeping `/source` honest
 

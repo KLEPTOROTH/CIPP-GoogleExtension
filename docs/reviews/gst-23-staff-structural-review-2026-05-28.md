@@ -11,6 +11,7 @@ Do **not** ship this branch yet. Targeted tests pass, but structural production 
 ## Blocking Findings (must fix before release)
 
 1. **High — Incorrect typed error mapping masks real failures and drives wrong retries**
+
    - File: `packages/adapter-cipp/src/index.ts`
    - Current behavior collapses non-404/429 HTTP failures, JSON parsing failures, and mapper failures into `NetworkTimeoutError`.
    - Required fix:
@@ -19,6 +20,7 @@ Do **not** ship this branch yet. Targeted tests pass, but structural production 
      - Treat parse/schema failures as contract errors, not timeout.
 
 2. **High — Trust-boundary violation through silent fallback defaults**
+
    - File: `packages/adapter-cipp/src/index.ts`
    - Current behavior fabricates values (`unknown`, fallback email, empty array on non-array response) instead of rejecting malformed provider payloads.
    - Required fix:
@@ -26,12 +28,14 @@ Do **not** ship this branch yet. Targeted tests pass, but structural production 
      - Return typed failure when provider payload is malformed.
 
 3. **High — Reconcile loop cannot heal missed delete/outbound drift**
+
    - Files: `apps/api/src/cipp/reconcile.ts`, `apps/api/src/cipp/store.ts`
    - Current behavior only upserts rows that exist in remote snapshot; it does not unbind/tombstone local records that no longer exist upstream.
    - Required fix:
      - Add negative-drift handling for local-only records according to source-of-truth semantics.
 
 4. **Medium — Durable queue processing has a race window under concurrent workers**
+
    - File: `apps/api/src/cipp/store.ts`
    - Current behavior does read-status then apply then write-status without an atomic claim.
    - Required fix:

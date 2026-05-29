@@ -48,11 +48,13 @@ type RouteContext = InvocationContext;
 type RouteRequest = HttpRequest;
 
 function buildRequestWithBody(userKey: string, body?: object): RouteRequest {
+  const raw = body === undefined ? '' : JSON.stringify(body);
   return {
     params: {
       customerId: customer.id,
       userKey,
     },
+    text: async () => raw,
     json: async () => body,
   } as RouteRequest;
 }
@@ -177,8 +179,14 @@ describe('suspend action handler', () => {
       const body = response.jsonBody as {
         action: 'suspend';
         chip: 'Suspended' | 'Inconsistent' | 'Failure';
-        m365: { mutation: { ok: boolean }; after: { ok: boolean; value?: { action: string; after: { suspended: boolean } } } };
-        google: { mutation: { ok: boolean }; after: { ok: boolean; value?: { action: string; after: { suspended: boolean } } } };
+        m365: {
+          mutation: { ok: boolean };
+          after: { ok: boolean; value?: { action: string; after: { suspended: boolean } } };
+        };
+        google: {
+          mutation: { ok: boolean };
+          after: { ok: boolean; value?: { action: string; after: { suspended: boolean } } };
+        };
       };
 
       expect(body.chip).toBe(scenario.expectedUiChip, scenario.name);
@@ -202,8 +210,8 @@ describe('suspend action handler', () => {
 
   it('returns 400 for malformed route params', async () => {
     const response = await createSuspendActionHandler(
-      ({ params: {}, json: async () => ({}) } as unknown) as RouteRequest,
-      ({} as unknown) as RouteContext,
+      { params: {}, json: async () => ({}) } as unknown as RouteRequest,
+      {} as unknown as RouteContext,
       'suspend',
     );
 
@@ -213,16 +221,14 @@ describe('suspend action handler', () => {
 
   it('returns 400 for invalid json body', async () => {
     const response = await createSuspendActionHandler(
-      ({
+      {
         params: {
           customerId: customer.id,
           userKey: seedUsers[0]!.id,
         },
-        json: async () => {
-          throw new Error('invalid body');
-        },
-      } as unknown) as RouteRequest,
-      ({} as unknown) as RouteContext,
+        text: async () => '{"actorId"',
+      } as unknown as RouteRequest,
+      {} as unknown as RouteContext,
       'suspend',
     );
 
@@ -238,14 +244,14 @@ describe('suspend action handler', () => {
     });
 
     const response = await createSuspendActionHandler(
-      ({
+      {
         params: {
           customerId: customer.id,
           userKey: seedUsers[0]!.id,
         },
         json: async () => ({ dryRun: true }),
-      } as unknown) as RouteRequest,
-      ({} as unknown) as RouteContext,
+      } as unknown as RouteRequest,
+      {} as unknown as RouteContext,
       'suspend',
     );
 

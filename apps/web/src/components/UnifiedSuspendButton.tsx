@@ -31,7 +31,13 @@ const outcomeColor = (outcome: ActionOutcome): 'primary' | 'warning' | 'error' =
   return 'error';
 };
 
-export default function UnifiedSuspendButton({ action, outcome, disabled, inFlight, onClick }: Props) {
+export default function UnifiedSuspendButton({
+  action,
+  outcome,
+  disabled,
+  inFlight,
+  onClick,
+}: Props) {
   return (
     <Button
       color={outcomeColor(outcome)}

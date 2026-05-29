@@ -82,7 +82,13 @@ describe('InMemoryAuditStore', () => {
       const actorId = index % 3 === 0 ? 'actor-a' : index % 3 === 1 ? 'actor-b' : 'actor-c';
       const target = `user-${index % 100}`;
       await store.writeAuditRecord(
-        makeAuditPayload('customer-a', actorId, target, index % 2 === 0 ? 'suspend' : 'resume', index),
+        makeAuditPayload(
+          'customer-a',
+          actorId,
+          target,
+          index % 2 === 0 ? 'suspend' : 'resume',
+          index,
+        ),
       );
     }
 

@@ -31,21 +31,26 @@ Behavior if missing: action route returns `503` with `AUDIT_STORE_NOT_CONFIGURED
 
 1. Storage account reachable from function runtime.
 2. Connection string has permissions for:
+
 - Table: create table, create entity, query entities.
 - Blob: create container, create blob, read blob.
+
 3. Container/table names comply with Azure naming rules.
 
 ## Deployment Gates
 
 1. Dependency availability
+
 - `@azure/data-tables`
 - `@azure/storage-blob`
 
 2. Runtime contract
+
 - No success response allowed when audit write fails.
 - Expected action statuses remain `200 | 207 | 502`.
 
 3. Audit durability
+
 - Blob payload writes with create-only semantics.
 - Table index uses create-only semantics (append-only behavior).
 
@@ -75,4 +80,3 @@ Behavior if missing: action route returns `503` with `AUDIT_STORE_NOT_CONFIGURED
 1. QA confirms failure matrix and envelope expectations.
 2. Release Engineer confirms env + IAM + smoke checks.
 3. CTO confirms governance and append-only audit constraints are preserved.
-

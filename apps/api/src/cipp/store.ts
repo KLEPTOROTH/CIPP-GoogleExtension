@@ -76,7 +76,9 @@ function nowIso(now: () => string): string {
   return now();
 }
 
-function normalizeBindingState(eventType: CippWebhookEvent['eventType']): CustomerMirrorRecord['bindingState'] {
+function normalizeBindingState(
+  eventType: CippWebhookEvent['eventType'],
+): CustomerMirrorRecord['bindingState'] {
   return eventType === 'customer.deleted' ? 'unbound' : 'bound';
 }
 
@@ -136,7 +138,11 @@ function mapEventEntity(entity: RawEventEntity): EventRecord {
   };
 }
 
-function toEventRecord(event: CippWebhookEvent, payloadHash: string, firstSeenAt: string): EventRecord {
+function toEventRecord(
+  event: CippWebhookEvent,
+  payloadHash: string,
+  firstSeenAt: string,
+): EventRecord {
   return {
     customerId: event.customerId,
     eventType: event.eventType,
@@ -191,10 +197,7 @@ export class InMemoryCippSyncStore implements CippSyncStore {
       return { accepted: false, reason: 'duplicate' };
     }
 
-    this.webhookEvents.set(
-      event.eventId,
-      toEventRecord(event, payloadHash, now),
-    );
+    this.webhookEvents.set(event.eventId, toEventRecord(event, payloadHash, now));
 
     return { accepted: true };
   }
@@ -208,7 +211,10 @@ export class InMemoryCippSyncStore implements CippSyncStore {
     if (queued && queued.status === 'received') {
       this.webhookEvents.set(event.eventId, { ...queued, status: 'processing' });
     }
-    return this.applyQueuedEvent(event, nowIso(() => new Date().toISOString()));
+    return this.applyQueuedEvent(
+      event,
+      nowIso(() => new Date().toISOString()),
+    );
   }
 
   async drainWebhookEvents(limit = 50): Promise<{
@@ -218,7 +224,9 @@ export class InMemoryCippSyncStore implements CippSyncStore {
     duplicate: number;
     replayConflicts: number;
   }> {
-    const received = [...this.webhookEvents.values()].filter((entry) => entry.status === 'received').slice(0, limit);
+    const received = [...this.webhookEvents.values()]
+      .filter((entry) => entry.status === 'received')
+      .slice(0, limit);
     let applied = 0;
     let skipped = 0;
     let stale = 0;
@@ -226,15 +234,16 @@ export class InMemoryCippSyncStore implements CippSyncStore {
     let replayConflicts = 0;
     const now = nowIso(() => new Date().toISOString());
 
+    const claimed: EventRecord[] = [];
     for (const entry of received) {
       const existing = this.webhookEvents.get(entry.eventId);
       if (!existing || existing.status !== 'received') {
         continue;
       }
-      this.webhookEvents.set(entry.eventId, { ...existing, status: 'processing' });
+      const claimedEntry = { ...existing, status: 'processing' as const };
+      this.webhookEvents.set(entry.eventId, claimedEntry);
+      claimed.push(claimedEntry);
     }
-
-    const claimed = [...this.webhookEvents.values()].filter((entry) => entry.status === 'processing').slice(0, limit);
 
     for (const entry of claimed) {
       const event = toWebhookEvent(entry);
@@ -263,14 +272,20 @@ export class InMemoryCippSyncStore implements CippSyncStore {
     return { applied, skipped, stale, duplicate, replayConflicts };
   }
 
-  private async applyQueuedEvent(event: CippWebhookEvent, observedAt: string): Promise<ProcessResult> {
+  private async applyQueuedEvent(
+    event: CippWebhookEvent,
+    observedAt: string,
+  ): Promise<ProcessResult> {
     const queueRecord = this.webhookEvents.get(event.eventId);
     if (!queueRecord) {
       return { accepted: false, reason: 'replay_conflict' };
     }
 
     if (queueRecord.status !== 'processing') {
-      return { accepted: false, reason: queueRecord.status === 'replay_conflict' ? 'replay_conflict' : 'duplicate' };
+      return {
+        accepted: false,
+        reason: queueRecord.status === 'replay_conflict' ? 'replay_conflict' : 'duplicate',
+      };
     }
 
     const existing = this.mirror.get(event.customerId);
@@ -342,8 +357,14 @@ export class DurableCippSyncStore implements CippSyncStore {
   private readonly now: () => string;
 
   constructor(options: DurableCippSyncStoreOptions) {
-    this.mirrorClient = TableClient.fromConnectionString(options.storageConnectionString, options.mirrorTableName);
-    this.eventClient = TableClient.fromConnectionString(options.storageConnectionString, options.eventTableName);
+    this.mirrorClient = TableClient.fromConnectionString(
+      options.storageConnectionString,
+      options.mirrorTableName,
+    );
+    this.eventClient = TableClient.fromConnectionString(
+      options.storageConnectionString,
+      options.eventTableName,
+    );
     this.mirrorTableName = options.mirrorTableName;
     this.eventTableName = options.eventTableName;
     this.now = options.now ?? (() => new Date().toISOString());
@@ -374,7 +395,10 @@ export class DurableCippSyncStore implements CippSyncStore {
 
   async getCustomer(customerId: string): Promise<CustomerMirrorRecord | undefined> {
     try {
-      const entity = await this.mirrorClient.getEntity<RawMirrorEntity>(MIRROR_PARTITION_KEY, customerId);
+      const entity = await this.mirrorClient.getEntity<RawMirrorEntity>(
+        MIRROR_PARTITION_KEY,
+        customerId,
+      );
       return mapMirrorEntity(entity);
     } catch (error) {
       if (isNotFoundError(error)) {
@@ -388,7 +412,12 @@ export class DurableCippSyncStore implements CippSyncStore {
     await this.ensureTables();
     const payloadHash = hashEvent(event);
     const now = nowIso(this.now);
-    const eventEntity = this.buildEventEntity({ event, payloadHash, firstSeenAt: now, status: 'received' });
+    const eventEntity = this.buildEventEntity({
+      event,
+      payloadHash,
+      firstSeenAt: now,
+      status: 'received',
+    });
     try {
       await this.eventClient.createEntity(eventEntity);
       return { accepted: true };
@@ -469,7 +498,9 @@ export class DurableCippSyncStore implements CippSyncStore {
     return { applied, skipped, stale, duplicate, replayConflicts };
   }
 
-  async reconcileFromSnapshot(remote: readonly CustomerMirrorRecord[]): Promise<{ repaired: number }> {
+  async reconcileFromSnapshot(
+    remote: readonly CustomerMirrorRecord[],
+  ): Promise<{ repaired: number }> {
     await this.ensureTables();
 
     const local = await this.snapshot();
@@ -531,7 +562,10 @@ export class DurableCippSyncStore implements CippSyncStore {
     return events;
   }
 
-  private async applyQueuedEvent(event: CippWebhookEvent, observedAt: string): Promise<ProcessResult> {
+  private async applyQueuedEvent(
+    event: CippWebhookEvent,
+    observedAt: string,
+  ): Promise<ProcessResult> {
     const existingEvent = await this.getEvent(event.eventId);
     if (!existingEvent) {
       return { accepted: false, reason: 'replay_conflict' };
@@ -675,34 +709,38 @@ export class DurableCippSyncStore implements CippSyncStore {
 
     this.tableCreation = (async () => {
       const tableService = TableServiceClient.fromConnectionString(
-        connectionString ?? process.env.AZURE_WEBJOBS_STORAGE ?? process.env.CIPP_WEBHOOK_STORAGE_CONNECTION_STRING ?? process.env.CIPP_STORAGE_CONNECTION_STRING ?? '',
+        connectionString ??
+          process.env.AZURE_WEBJOBS_STORAGE ??
+          process.env.CIPP_WEBHOOK_STORAGE_CONNECTION_STRING ??
+          process.env.CIPP_STORAGE_CONNECTION_STRING ??
+          '',
       );
       try {
         await tableService.createTable(this.mirrorTableName);
       } catch (error) {
-        if (!isConflictError(error)) {
-          if (!isNotFoundError(error)) {
-            void error;
-          }
+        if (!isConflictError(error) && !isNotFoundError(error)) {
+          throw error;
         }
       }
 
       try {
         await tableService.createTable(this.eventTableName);
       } catch (error) {
-        if (!isConflictError(error)) {
-          if (!isNotFoundError(error)) {
-            void error;
-          }
+        if (!isConflictError(error) && !isNotFoundError(error)) {
+          throw error;
         }
       }
-    })();
+    })().catch((error) => {
+      this.tableCreation = undefined;
+      throw error;
+    });
 
     return this.tableCreation;
   }
 }
 
 export function createCippSyncStore(env: NodeJS.ProcessEnv = process.env): CippSyncStore {
+  const allowInMemoryFallback = env.CIPP_ALLOW_INMEMORY_FALLBACK === 'true';
   const storageConnectionString =
     env.CIPP_WEBHOOK_STORAGE_CONNECTION_STRING ??
     env.CIPP_STORAGE_CONNECTION_STRING ??
@@ -719,7 +757,10 @@ export function createCippSyncStore(env: NodeJS.ProcessEnv = process.env): CippS
       mirrorTableName: env.CIPP_WEBHOOK_MIRROR_TABLE ?? DEFAULT_MIRROR_TABLE,
       eventTableName: env.CIPP_WEBHOOK_EVENT_TABLE ?? DEFAULT_WEBHOOK_EVENT_TABLE,
     });
-  } catch {
+  } catch (error) {
+    if (!allowInMemoryFallback) {
+      throw error;
+    }
     return new InMemoryCippSyncStore();
   }
 }

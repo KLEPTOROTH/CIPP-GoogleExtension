@@ -22,14 +22,17 @@ Do not expand scope to provider-specific feature additions in this review pass.
 ## Required Review Checks
 
 1. Contract integrity
+
 - Confirm `IdentityProvider` method signatures are stable and match current contract.
 - Confirm exported core types support adapter and UI integration without ambiguity.
 
 2. Conformance portability
+
 - Confirm shared conformance suite entrypoint is reusable by real adapters.
 - Confirm no runtime production coupling to test-only framework internals.
 
 3. Failure-mode coverage
+
 - Confirm matrix includes:
   - success
   - generic provider failure
@@ -38,6 +41,7 @@ Do not expand scope to provider-specific feature additions in this review pass.
   - network timeout
 
 4. Boundary and dependency controls
+
 - Confirm no external SDK imports in `packages/core` or `packages/adapter-mock`.
 - Confirm changes preserve strict-mode compatibility for touched TS files.
 

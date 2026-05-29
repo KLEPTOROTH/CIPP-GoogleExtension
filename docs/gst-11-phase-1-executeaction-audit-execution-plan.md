@@ -26,6 +26,7 @@ Status assumption for this heartbeat: **no GST-11 branch/commit/PR is present in
 - `packages/core/src/types.ts`
   - extend shared `AuditEntry` and provider result types as needed
 - `packages/audit/`
+
   - `src/index.ts` — client interfaces (`auditWriter`, `auditReader`)
   - `src/writer.ts` — table+blob persistence
   - `src/reader.ts` — filtering API
@@ -33,6 +34,7 @@ Status assumption for this heartbeat: **no GST-11 branch/commit/PR is present in
   - `src/test/...` — Mock storage contract tests + repository tests
 
 - `apps/api/action/`
+
   - HTTP route(s) call `executeAction`
   - maps exception classes/codes to HTTP status + correlation metadata
 
@@ -155,6 +157,7 @@ END
 ```
 
 State enum suggestion:
+
 - `idle`
 - `snapshots_before_started`
 - `mutations_inflight`
@@ -163,6 +166,7 @@ State enum suggestion:
 - `completed`
 
 Failure states:
+
 - `preflight_aborted`
 - `partial_failure`
 - `total_failure`
@@ -178,6 +182,7 @@ Failure states:
 - `correlationId`, `actor`, `customer`, `action`, `targetKey`
 
 Return object:
+
 - `m365: ProviderResult<AuditEntry | UserSnapshot>`
 - `google: ProviderResult<AuditEntry | UserSnapshot>`
 - `audit: AuditEntry` (or envelope with `auditKey` and status metadata)
@@ -223,6 +228,7 @@ export interface ExecuteActionResponse {
 ### 7.3 Reader filtering
 
 Filters supported:
+
 - `customerId` (required)
 - `targetUserId`
 - `actorId`
@@ -230,19 +236,20 @@ Filters supported:
 - `from` and `to` timestamp range
 
 Pagination strategy:
+
 - Table query by `customerId + timestamp` window first, then continue with continuation token.
 - No offset-based slicing.
 - Cursor must be opaque and signed by server.
 
 ## 8) Failure matrix + expected audit status
 
-| Scenario | M365 | Google | HTTP | `attempted` | `applied` |
-|---|---|---|---|---|---|
-| success-both | ok | ok | 200 | true | true |
-| partial-fail-M365 | fail | ok | 207 | true | true |
-| partial-fail-Google | ok | fail | 207 | true | true |
-| fail-both | fail | fail | 502 | true | false |
-| timeout-one-side | fail(timeout) | ok | 207 | true | true |
+| Scenario            | M365          | Google | HTTP | `attempted` | `applied` |
+| ------------------- | ------------- | ------ | ---- | ----------- | --------- |
+| success-both        | ok            | ok     | 200  | true        | true      |
+| partial-fail-M365   | fail          | ok     | 207  | true        | true      |
+| partial-fail-Google | ok            | fail   | 207  | true        | true      |
+| fail-both           | fail          | fail   | 502  | true        | false     |
+| timeout-one-side    | fail(timeout) | ok     | 207  | true        | true      |
 
 ## 9) Edge cases and assumptions made explicit
 
@@ -257,6 +264,7 @@ Pagination strategy:
 ## 10) Test matrix (minimum to ship)
 
 ### Unit / Contract
+
 - `executeAction` success path
 - `executeAction` partial failures for each side
 - both-side failure path
@@ -265,6 +273,7 @@ Pagination strategy:
 - audit status and status-code mapping
 
 ### Integration with `MockAdapter`
+
 - success-both
 - partial-fail-M365
 - partial-fail-Google
@@ -274,11 +283,13 @@ Pagination strategy:
 - verify raw before/after blobs contain both provider payloads
 
 ### Reader tests (10k scale)
+
 - filtering by each dimension independently and combined
 - cursor pagination forward/backward in 10k dataset without row loss
 - monotonicity assertion on timestamps and dedupe
 
 ### Cross-layer
+
 - health API route returns typed envelope from `executeAction`
 - web rendering path accepts `{207, 502}` as non-fatal and surfaced with per-provider badges
 
@@ -293,5 +304,6 @@ Pagination strategy:
 I could not locate a `GST-11` branch, commit, or PR in this checkout or upstream GitHub references.
 
 Next unblock action:
+
 1. Provide exact target branch/commit/PR for GST-11 so implementation review can be performed on that diff.
 2. If no such ref exists, confirm permission for this branch to begin implementation directly from `main` using this plan.

@@ -14,10 +14,7 @@
       "nextPageToken": null
     },
     "responseIsBinary": false,
-    "rawHeaders": [
-      "Content-Type",
-      "application/json"
-    ],
+    "rawHeaders": ["Content-Type", "application/json"],
     "reqheaders": {
       "content-type": "application/json",
       "accept": "application/json"

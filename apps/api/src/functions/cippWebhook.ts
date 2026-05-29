@@ -1,11 +1,19 @@
-import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from '@azure/functions';
+import {
+  app,
+  type HttpRequest,
+  type HttpResponseInit,
+  type InvocationContext,
+} from '@azure/functions';
 
 import { createCippSyncStore } from '../cipp/store.js';
 import { processWebhookEvent } from '../cipp/webhook.js';
 
 const syncStore = createCippSyncStore();
 
-export async function cippWebhook(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+export async function cippWebhook(
+  request: HttpRequest,
+  _context: InvocationContext,
+): Promise<HttpResponseInit> {
   const secret = process.env.CIPP_WEBHOOK_SECRET ?? '';
   if (!secret) {
     return {

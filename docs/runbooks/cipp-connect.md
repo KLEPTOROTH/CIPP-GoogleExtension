@@ -25,11 +25,13 @@ through credential rotation.
 Use `docs/cipp-api-surface.md` for canonical API behavior and mode flags.
 
 Hosted mode:
+
 - ARC owns secret material and lifecycle.
 - Endpoint pattern is stable across tenant environments.
 - Network trust is mostly Azure-hosted; use Azure-side connectivity checks.
 
 Self-hosted mode:
+
 - Secret material reference may come from tenant-managed store or explicit reference passed in configuration.
 - Verify base URL protocol/hostname and CA chain before validation.
 - Expect more variable error shapes; always rely on normalized ARC error codes.
@@ -89,16 +91,19 @@ Actions:
 ## 8) Health checks and periodic monitoring
 
 Every automated check should poll:
+
 - `GET /api/v1/integrations/cipp/status`
 - `GET /api/v1/health`
 
 Alert/rollback rule:
+
 - any sustained `degraded` state for 3 checks should trigger ops notification
 - stale health > 10 minutes should trigger immediate manual re-check
 
 ## 9) Audit and evidence
 
 When opening a support ticket, include:
+
 - operator action (`connect|reconnect|disconnect`)
 - requestId from UI/API
 - last 3 status transitions for integration
@@ -114,6 +119,7 @@ When opening a support ticket, include:
 ## 11) Escalation path
 
 If repeated reconnect attempts fail:
+
 1. Validate CIPP endpoint and cert path manually.
 2. Validate Key Vault access and reference string.
 3. Open ticket with:

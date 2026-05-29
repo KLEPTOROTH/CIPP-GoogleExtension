@@ -1,5 +1,14 @@
 import Link from 'next/link';
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
 
 import { getCustomers, type CustomerSummary } from '@/data/gst12Fixtures';
 
@@ -29,9 +38,7 @@ export default function CustomersPage() {
               <TableCell>{customer.googleBindingState}</TableCell>
               <TableCell>{customer.lastConnectedAt}</TableCell>
               <TableCell align="right">
-                <Link href={`/customers/${customer.id}/users`}>
-                  Open users
-                </Link>
+                <Link href={`/customers/${customer.id}/users`}>Open users</Link>
               </TableCell>
             </TableRow>
           ))}

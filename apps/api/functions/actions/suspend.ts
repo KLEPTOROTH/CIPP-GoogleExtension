@@ -1,8 +1,10 @@
-import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from '@azure/functions';
 import {
-  createAuditStoreFromEnv,
-  type AuditStore,
-} from '@cipp-google/audit';
+  app,
+  type HttpRequest,
+  type HttpResponseInit,
+  type InvocationContext,
+} from '@azure/functions';
+import { createAuditStoreFromEnv, type AuditStore } from '@cipp-google/audit';
 import {
   type Customer,
   type IdentityProvider,
@@ -61,9 +63,7 @@ try {
   auditStore = createAuditStoreFromEnv({ requireDurable: true });
 } catch (error) {
   auditStoreInitializationError =
-    error instanceof Error
-      ? error
-      : new Error('Durable audit store initialization failed.');
+    error instanceof Error ? error : new Error('Durable audit store initialization failed.');
 }
 
 const MAX_ACTOR_ID_CHARS = 128;
@@ -225,7 +225,17 @@ export async function createSuspendActionHandler(
 
   let body: SuspendRequestBody;
   try {
-    body = parseBody(await req.json());
+    // Parse transport body first so empty payloads are treated as {} while malformed JSON still fails.
+    if (typeof req.text === 'function') {
+      const rawBody = await req.text();
+      if (!rawBody.trim()) {
+        body = parseBody({});
+      } else {
+        body = parseBody(JSON.parse(rawBody));
+      }
+    } else {
+      body = parseBody(await req.json());
+    }
   } catch (error) {
     const normalized = isNormalizedApiError(error)
       ? error
@@ -279,7 +289,11 @@ export async function createSuspendActionHandler(
   }
 
   if (auditStoreInitializationError || !auditStore) {
-    logContextError(context, 'Durable audit store is not configured for action route.', auditStoreInitializationError);
+    logContextError(
+      context,
+      'Durable audit store is not configured for action route.',
+      auditStoreInitializationError,
+    );
     return createAuditStoreNotConfiguredResponse();
   }
 

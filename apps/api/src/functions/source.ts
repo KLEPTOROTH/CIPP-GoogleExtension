@@ -10,7 +10,12 @@
 // for the stamping step and `docs/agpl-source-availability.md` for
 // the contract.
 
-import { app, type HttpRequest, type InvocationContext, type HttpResponseInit } from '@azure/functions';
+import {
+  app,
+  type HttpRequest,
+  type InvocationContext,
+  type HttpResponseInit,
+} from '@azure/functions';
 
 export interface SourceManifest {
   commitSha: string;

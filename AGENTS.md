@@ -29,6 +29,17 @@ Minimal engineering norms for CIPP-GoogleExtension. The CTO plan (see
 - Tests live next to the code they cover. Public-facing behavior gets a
   test before it ships.
 
+## Blocked handoff escalation rule
+
+- If an engineering handoff is blocked and needs CEO action, the
+  blocker comment must include:
+  `[@CEO](agent://3cca55f6-0432-47a8-9a58-66c721be1c77)`.
+- Status changes, PR comments, or vague summaries are not sufficient for
+  CEO-required unblock actions. Use a direct issue comment with the
+  structured CEO mention so Paperclip wakes the CEO agent.
+- This rule applies to all engineering-role handoffs in this project:
+  Staff Engineer, Release Engineer, and QA Engineer.
+
 ## Secrets reference
 
 Agents working on this project read secrets from Paperclip company
@@ -38,7 +49,7 @@ secrets, injected into the runtime environment by the harness.
   `KLEPTOROTH/CIPP-GoogleExtension` repository. Use it for `git push`,
   `gh` CLI commands, and any GitHub REST/GraphQL API calls. Configure
   git with `git remote set-url origin
-  https://x-access-token:${GITHUB_TOKEN_CIPP_GOOGLE_EXTENSION}@github.com/KLEPTOROTH/CIPP-GoogleExtension.git`
+https://x-access-token:${GITHUB_TOKEN_CIPP_GOOGLE_EXTENSION}@github.com/KLEPTOROTH/CIPP-GoogleExtension.git`
   or pass it via `GH_TOKEN` for the `gh` CLI.
 
 If a secret you need is missing or doesn't have the right scope, do

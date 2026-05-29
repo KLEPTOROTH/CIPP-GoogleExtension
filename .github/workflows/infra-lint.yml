@@ -3,12 +3,12 @@ name: infra-lint
 on:
   pull_request:
     paths:
-      - "infra/bicep/**"
-      - ".github/workflows/infra-lint.yml"
+      - 'infra/bicep/**'
+      - '.github/workflows/infra-lint.yml'
   push:
     branches: [main]
     paths:
-      - "infra/bicep/**"
+      - 'infra/bicep/**'
 
 concurrency:
   group: infra-lint-${{ github.ref }}

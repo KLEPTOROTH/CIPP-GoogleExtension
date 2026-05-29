@@ -11,6 +11,7 @@ Branch is structurally safe for pre-landing on GST-23 scope. The five prior requ
 ## Blocker Closure
 
 1. **Typed error mapping (closed)**
+
    - `packages/adapter-cipp/src/index.ts`
    - Non-404/429 HTTP now maps to `GenericProviderError(cipp_http_<status>)`.
    - Timeout/abort maps to `NetworkTimeoutError(cipp_request_timeout)`.
@@ -18,15 +19,18 @@ Branch is structurally safe for pre-landing on GST-23 scope. The five prior requ
    - Invalid JSON/payload maps to `GenericProviderError(cipp_invalid_json|cipp_invalid_payload)`.
 
 2. **Trust-boundary payload validation (closed)**
+
    - `packages/adapter-cipp/src/index.ts`
    - `listCustomers`/`listUsers` enforce array payload shape.
    - Customer/user mapping enforces required typed fields; malformed payloads are rejected, not fabricated.
 
 3. **Reconcile delete drift healing (closed)**
+
    - `apps/api/src/cipp/store.ts`
    - `reconcileFromSnapshot` now unbinds local-only bound records not present in remote snapshot.
 
 4. **Concurrent queue claim race (closed)**
+
    - `apps/api/src/cipp/store.ts`
    - Durable store introduces `claimEventForProcessing` with ETag-guarded status transition to `processing` before apply.
 

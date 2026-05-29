@@ -1,0 +1,16 @@
+# GST-96 bounded v0.1 merge-candidate allowlist (paths relative to repo root)
+.github/workflows/gst64-playwright-gate.yml
+tools/test/run-gst64-playwright-gate.sh
+apps/api/src/functions/reconcileCustomers.ts
+apps/api/src/cipp/store.ts
+apps/api/test/cipp-sync.test.ts
+apps/api/test/cipp-store-factory.test.ts
+apps/api/src/functions/source.ts
+apps/api/functions/actions/suspend.ts
+packages/core/src/execute-action.ts
+packages/core/test/execute-action.test.ts
+apps/web/pages/customers/index.tsx
+apps/web/pages/customers/[id]/users/index.tsx
+apps/web/pages/customers/[id]/users/[key].tsx
+apps/web/src/components/UnifiedSuspendButton.tsx
+apps/web/src/components/SuspensionStatus.tsx
