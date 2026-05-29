@@ -63,7 +63,9 @@ jobs:
         run: pnpm --filter @cipp-google/web test:e2e -- tests/e2e/smoke.spec.ts
 
       - name: Upload Playwright artifacts
+        id: upload_artifacts
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: gst64-playwright-artifacts
@@ -72,6 +74,38 @@ jobs:
             apps/web/test-results
             /tmp/gst64-web.log
           if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Emit Playwright artifact fallback
+        if: always() && steps.upload_artifacts.outcome == 'failure'
+        run: |
+          evidence_paths=()
+          [ -d apps/web/playwright-report ] && evidence_paths+=("apps/web/playwright-report")
+          [ -d apps/web/test-results ] && evidence_paths+=("apps/web/test-results")
+          [ -f /tmp/gst64-web.log ] && evidence_paths+=("/tmp/gst64-web.log")
+
+          if [ "${#evidence_paths[@]}" -eq 0 ]; then
+            echo "No GST-64 evidence paths were present for fallback capture."
+            exit 0
+          fi
+
+          tar -czf /tmp/gst64-playwright-artifacts.tgz "${evidence_paths[@]}"
+          {
+            echo "## GST-64 Playwright artifact fallback"
+            echo
+            echo "Artifact upload failed, so this run emitted a base64 tarball in the job log."
+            echo
+            echo "Recover with:"
+            echo
+            echo '```bash'
+            echo "sed -n '/^GST64_ARTIFACT_TGZ_BASE64_BEGIN$/,/^GST64_ARTIFACT_TGZ_BASE64_END$/p' job.log | sed '1d;\$d' | base64 -d > gst64-playwright-artifacts.tgz"
+            echo "tar -xzf gst64-playwright-artifacts.tgz"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "GST64_ARTIFACT_TGZ_BASE64_BEGIN"
+          base64 /tmp/gst64-playwright-artifacts.tgz
+          echo "GST64_ARTIFACT_TGZ_BASE64_END"
 
       - name: Stop web app
         if: always()
