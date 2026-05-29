@@ -13,6 +13,7 @@
     "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
+    "@azure/data-tables": "13.3.2",
     "@azure/functions": "4.5.1",
     "@cipp-google/core": "workspace:*"
   },
