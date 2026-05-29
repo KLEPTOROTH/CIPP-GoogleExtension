@@ -43,6 +43,8 @@ jobs:
         run: pnpm --filter @cipp-google/web build
 
       - name: Start web app
+        env:
+          GST12_TEST_RESET_ENABLED: '1'
         run: |
           PORT=3100 pnpm --filter @cipp-google/web start > /tmp/gst64-web.log 2>&1 &
           echo $! > /tmp/gst64-web.pid

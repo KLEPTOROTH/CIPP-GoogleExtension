@@ -3,7 +3,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { resetGst12Fixtures } from '@/data/gst12Fixtures';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (process.env.NODE_ENV === 'production' && process.env.CI !== 'true') {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.GST12_TEST_RESET_ENABLED !== '1'
+  ) {
     res.status(404).end();
     return;
   }
