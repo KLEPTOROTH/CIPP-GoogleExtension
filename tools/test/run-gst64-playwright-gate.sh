@@ -14,7 +14,7 @@ echo "Building web app (with workspace dependencies)..."
 pnpm turbo run build --filter=@cipp-google/web
 
 echo "Starting web app on ${PLAYWRIGHT_BASE_URL}..."
-PORT=3100 pnpm --filter @cipp-google/web start >/tmp/gst64-web.log 2>&1 &
+pnpm --filter @cipp-google/web exec serve -l tcp://127.0.0.1:3100 --no-port-switching out >/tmp/gst64-web.log 2>&1 &
 web_pid=$!
 cleanup() {
   kill "${web_pid}" >/dev/null 2>&1 || true
