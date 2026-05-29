@@ -26,3 +26,21 @@ The gate command now owns the full smoke lifecycle:
 ## Local harness note
 
 The current Paperclip local harness reports Debian 13 with Node 24, which is outside this repository's Node 20 engine contract and outside the supported runner contract for the GST-64 gate. Authoritative GST-134 evidence should come from the GitHub-hosted `gst64-playwright-gate` workflow on PR #10.
+
+## Verification evidence
+
+- Workflow run: https://github.com/KLEPTOROTH/CIPP-GoogleExtension/actions/runs/26612276962
+- Job: https://github.com/KLEPTOROTH/CIPP-GoogleExtension/actions/runs/26612276962/job/78420547560
+- Commit: `0b1b04d`
+- Result: PASS
+
+Key hosted-runner signals:
+
+- Node runtime resolved to `v20.20.2`.
+- `pnpm install --frozen-lockfile` completed.
+- Playwright installed Chromium dependencies on `ubuntu-22.04`.
+- Chromium executable verified at `.cache/ms-playwright/chromium-1148/chrome-linux/chrome`.
+- `pnpm turbo run build --filter=@cipp-google/web` completed with 3 successful tasks.
+- Playwright ran 2 Chromium smoke tests and reported `2 passed`.
+
+Note: artifact upload attempted after the gate and hit the repository Actions artifact storage quota. The workflow marks artifact upload non-blocking so quota exhaustion does not mask the runner/browser/test result.
