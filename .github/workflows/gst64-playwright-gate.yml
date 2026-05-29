@@ -36,31 +36,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Chromium browser
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Build web app
-        run: pnpm --filter @cipp-google/web build
-
-      - name: Start web app
-        run: |
-          PORT=3100 pnpm --filter @cipp-google/web start > /tmp/gst64-web.log 2>&1 &
-          echo $! > /tmp/gst64-web.pid
-          for _ in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:3100 >/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "::error::web app did not become ready on 127.0.0.1:3100"
-          cat /tmp/gst64-web.log || true
-          exit 1
+      - name: Cache Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: .cache/ms-playwright
+          key: gst64-playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Run GST-64 smoke gate
         env:
+          PLAYWRIGHT_INSTALL_WITH_DEPS: '1'
           PLAYWRIGHT_NO_WEBSERVER: '1'
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3100
-        run: pnpm --filter @cipp-google/web test:e2e -- tests/e2e/smoke.spec.ts
+        run: bash tools/test/run-gst64-playwright-gate.sh
 
       - name: Upload Playwright artifacts
         if: always()
