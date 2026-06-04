@@ -60,6 +60,8 @@ interface RawMirrorEntity extends TableEntity {
 interface RawEventEntity extends TableEntity {
   PartitionKey: string;
   RowKey: string;
+  partitionKey: string;
+  rowKey: string;
   customerId: string;
   eventType: CippWebhookEvent['eventType'];
   eventId: string;
@@ -616,6 +618,7 @@ export class DurableCippSyncStore implements CippSyncStore {
       });
       return { accepted: false, reason: 'stale' };
     }
+
     await this.updateEventStatus(event.eventId, {
       status: 'applied',
       processedAt: nowIso(this.now),
@@ -713,7 +716,7 @@ export class DurableCippSyncStore implements CippSyncStore {
         }
       }
 
-      const etag = (existingEntity as { etag?: string }).etag;
+      const etag = existingEntity.etag;
       if (!etag) {
         await this.upsertMirror(record);
         return true;
@@ -777,6 +780,8 @@ export class DurableCippSyncStore implements CippSyncStore {
     return {
       PartitionKey: EVENT_PARTITION_KEY,
       RowKey: params.event.eventId,
+      partitionKey: EVENT_PARTITION_KEY,
+      rowKey: params.event.eventId,
       customerId: params.event.customerId,
       eventType: params.event.eventType,
       eventId: params.event.eventId,
